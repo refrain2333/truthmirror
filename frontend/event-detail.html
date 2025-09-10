@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>事件详情 - 真相之镜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+
+
+        /* 主要内容 */
+        main {
+            padding: 40px 0;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 20px 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .event-detail {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .event-header {
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .event-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-pending { 
+            background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 100%); 
+            color: #92400e; 
+        }
+        .status-nominated { 
+            background: linear-gradient(135deg, #dbeafe 0%, #3b82f6 100%); 
+            color: #1e40af; 
+        }
+        .status-processing { 
+            background: linear-gradient(135deg, #fed7d7 0%, #f56565 100%); 
+            color: #c53030; 
+        }
+        .status-voting { 
+            background: linear-gradient(135deg, #d1fae5 0%, #10b981 100%); 
+            color: #047857; 
+        }
+        .status-confirmed { 
+            background: linear-gradient(135deg, #e2e8f0 0%, #64748b 100%); 
+            color: #334155; 
+        }
+
+        .event-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+
+        .event-meta {
+            display: flex;
+            gap: 30px;
+            color: #666;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+
+        .event-content {
+            padding: 30px;
+        }
+
+        .event-description {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #444;
+            margin-bottom: 30px;
+        }
+
+        /* 投票区域 */
+        .voting-section {
+            background: #f8f9fa;
+            padding: 25px 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .voting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .voting-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .vote-count {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .vote-progress {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.3s;
+        }
+
+        .vote-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .vote-question {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #444;
+        }
+
+        .vote-progress {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill.support {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.3s;
+        }
+
+        .progress-fill.oppose {
+            height: 100%;
+            background: #dc3545;
+            transition: width 0.3s;
+        }
+
+        .progress-bar-dual {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            display: flex;
+        }
+
+        .vote-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .support-stat {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .oppose-stat {
+            color: #dc3545;
+            font-weight: 500;
+        }
+
+        .vote-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .vote-btn {
+            flex: 1;
+            max-width: 200px;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .vote-btn:hover {
+            border-color: #999;
+        }
+
+        .vote-btn.support {
+            border-color: #28a745;
+            color: #28a745;
+        }
+
+        .vote-btn.support:hover,
+        .vote-btn.support.voted {
+            background: #28a745;
+            color: white;
+        }
+
+        .vote-btn.oppose {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+        .vote-btn.oppose:hover,
+        .vote-btn.oppose.voted {
+            background: #dc3545;
+            color: white;
+        }
+
+        .vote-text {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .vote-desc {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .status-badge.confirmed {
+            background: #ddd6fe;
+            color: #5b21b6;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .vote-final-message {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #666;
+        }
+
+        .vote-final {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .vote-result {
+            text-align: center;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .vote-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* AI分析区域 - 保持原有简洁风格 */
+        .ai-analysis-section {
+            background: #f8f9fa;
+            padding: 25px 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .ai-analysis-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .ai-rating-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .rating-reliable { background: #d4edda; color: #155724; }
+        .rating-questionable { background: #fff3cd; color: #856404; }
+        .rating-unreliable { background: #f8d7da; color: #721c24; }
+        .rating-insufficient { background: #e2e3e5; color: #383d41; }
+
+        .ai-summary-content {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #2c5aa0;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        /* 信息源区域 - 保持原有简洁风格 */
+        .sources-section {
+            background: #f8f9fa;
+            padding: 25px 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .sources-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .source-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .source-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .source-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .source-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .source-url {
+            color: #2c5aa0;
+            text-decoration: none;
+            font-size: 14px;
+            word-break: break-all;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .source-url:hover {
+            text-decoration: underline;
+        }
+
+        .source-summary {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        /* 操作按钮 */
+        .actions {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.9);
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-prompt {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .login-prompt a {
+            color: #2c5aa0;
+            text-decoration: none;
+        }
+
+        .login-prompt a:hover {
+            text-decoration: underline;
+        }
+
+        /* AI处理状态样式 */
+        .ai-processing-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            color: #856404;
+            font-weight: 500;
+        }
+
+        .loading-icon {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .event-title {
+                font-size: 24px;
+            }
+
+            .event-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .event-header,
+            .event-content,
+            .voting-section,
+            .analysis-section,
+            .sources-section {
+                padding: 20px 15px;
+            }
+
+            .vote-buttons {
+                flex-direction: column;
+            }
+
+            .vote-btn {
+                max-width: none;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+
+    <main>
+        <div class="container">
+            <div class="main-content">
+                <div class="event-detail" id="event-detail">
+                    <!-- 内容将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 引入导航栏组件 -->
+    <script src="./js/nav.js"></script>
+    <!-- 引入API管理器 -->
+    <script src="./js/api.js"></script>
+    <script>
+        let eventData = null;
+        let currentUser = null;
+        let userVote = null;
+
+        // 事件状态标签映射（与index.html保持一致）
+        window.STATUS_LABELS = window.STATUS_LABELS || {
+            'pending': '待审核',
+            'nominated': '已提名',
+            'processing': '处理中',
+            'voting': '投票中',
+            'confirmed': '已确认'
+        };
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查用户登录状态
+            const userStr = localStorage.getItem('currentUser');
+            if (userStr) {
+                try {
+                    currentUser = JSON.parse(userStr);
+                } catch (error) {
+                    console.error('解析用户信息失败:', error);
+                }
+            }
+
+            // 获取事件ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('id');
+            
+            if (eventId) {
+                loadEvent(eventId);
+            } else {
+                showError('未指定事件ID');
+            }
+        });
+
+        // 加载事件详情（使用真实API）
+        async function loadEvent(eventId) {
+            try {
+                // 显示加载状态
+                showLoading();
+                
+                // 使用简化的API调用，直接获取事件详情
+                eventData = await api.getEventDetail(eventId);
+                
+                // 如果用户已登录，检查投票状态（投票阶段和已确认阶段都需要）
+                if (currentUser && (eventData.status === 'voting' || eventData.status === 'confirmed')) {
+                    try {
+                        const votes = await api.getEventVotes(eventId);
+                        userVote = votes.find(vote => vote.user_id === currentUser.id);
+                        console.log('用户投票状态:', userVote);
+                    } catch (error) {
+                        console.log('获取用户投票状态失败:', error);
+                    }
+                }
+                
+                renderEvent();
+                
+            } catch (error) {
+                console.error('加载事件失败:', error);
+                showError('无法连接到服务器，请检查网络连接或稍后重试');
+            }
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            const container = document.getElementById('event-detail');
+            container.innerHTML = `
+                <div class="event-header">
+                    <div class="event-title">加载中...</div>
+                </div>
+                <div class="event-content">
+                    <p>正在获取事件详情，请稍候</p>
+                </div>
+            `;
+        }
+
+        // 获取示例事件数据（保持原有逻辑但适配API格式）
+        function getMockEventData(eventId) {
+            const mockEvents = {
+                '1': {
+                    id: 1,
+                    title: '某地发生重大交通事故',
+                    description: `据报道，今日上午10时许，某省某市高速公路发生多车连环相撞事故。现场初步统计有15辆车不同程度受损，造成3人死亡，8人受伤。
+
+事故发生后，当地交警、消防、医疗等部门迅速赶到现场进行救援处理。目前伤者已送往附近医院接受治疗，事故原因正在调查中。
+
+据现场目击者描述，事发时路面存在大雾天气，能见度较低。高速交警提醒广大驾驶员，雾天行车务必减速慢行，保持安全距离。
+
+相关部门表示，将全力做好事故善后处理工作，并加强高速公路安全管控，防范类似事故再次发生。`,
+                    keywords: '交通事故,高速公路,大雾,伤亡',
+                    status: 'voting',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    interest_count: 156,
+                    creator_id: 1,
+                    creator: {
+                        id: 1,
+                        username: 'news_reporter',
+                        email: 'reporter@example.com',
+                        role: 'user'
+                    },
+                    vote_stats: {
+                        total_votes: 1123,
+                        support_votes: 892,
+                        oppose_votes: 231,
+                        support_percentage: 79.4,
+                        oppose_percentage: 20.6
+                    },
+                    ai_analysis: {
+                        id: 1,
+                        support_arguments: '多个官方媒体报道一致；现场照片和视频证据充分；相关部门及时响应处理',
+                        oppose_arguments: '部分细节描述存在差异；未见官方权威确认伤亡数字',
+                        ai_judgment: 'support',
+                        confidence_score: 0.75,
+                        created_at: new Date().toISOString()
+                    },
+                    information_sources: [
+                        {
+                            id: 1,
+                            url: 'http://example.com/traffic-report',
+                            title: '当地交警部门官方通报',
+                            content: '官方确认事故基本信息',
+                            stance: 'support',
+                            relevance_score: 0.9,
+                            ai_summary: '官方权威信息源，确认事故发生和基本情况',
+                            created_at: new Date().toISOString()
+                        },
+                        {
+                            id: 2,
+                            url: 'http://example.com/news-report',
+                            title: '新闻媒体现场报道',
+                            content: '记者现场采访和图片报道',
+                            stance: 'support',
+                            relevance_score: 0.75,
+                            ai_summary: '现场报道提供详细情况和图片证据',
+                            created_at: new Date().toISOString()
+                        }
+                    ]
+                },
+                '2': {
+                    id: 2,
+                    title: '新型科技产品发布会',
+                    description: '某知名科技公司宣布将于下月举办新产品发布会，预计将推出革命性的新技术产品。据内部消息透露，该产品可能涉及人工智能和量子计算技术的突破。',
+                    keywords: '科技,发布会,新产品,人工智能',
+                    status: 'processing',
+                    created_at: new Date(Date.now() - 86400000).toISOString(),
+                    updated_at: new Date(Date.now() - 86400000).toISOString(),
+                    interest_count: 234,
+                    creator_id: 2,
+                    creator: {
+                        id: 2,
+                        username: 'tech_watcher',
+                        email: 'tech@example.com',
+                        role: 'user'
+                    },
+                    information_sources: []
+                }
+            };
+            
+            return mockEvents[eventId] || {
+                id: parseInt(eventId) || 0,
+                title: '事件不存在',
+                description: '抱歉，未找到指定的事件信息。',
+                keywords: '',
+                status: 'pending',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                interest_count: 0,
+                creator_id: 1,
+                creator: {
+                    id: 1,
+                    username: 'system',
+                    email: 'system@example.com',
+                    role: 'user'
+                },
+                information_sources: []
+            };
+        }
+
+        // 渲染事件详情
+        function renderEvent() {
+            const container = document.getElementById('event-detail');
+            
+            container.innerHTML = `
+                <div class="event-header">
+                    <div class="event-status status-${eventData.status}">
+                        ${window.STATUS_LABELS[eventData.status] || eventData.status}
+                    </div>
+                    <h1 class="event-title">${eventData.title || '未知事件'}</h1>
+                    <div class="event-meta">
+                        <span>发布时间：${formatDate(eventData.created_at)}</span>
+                        <span>发布者：${eventData.creator?.username || eventData.creator?.nickname || '未知'}</span>
+                        <span>关注人数：${eventData.interest_count || 0} 人</span>
+                        ${eventData.vote_stats ? `<span>投票数：${eventData.vote_stats.total_votes || 0} 票</span>` : ''}
+                    </div>
+                </div>
+
+                <div class="event-content">
+                    <div class="event-description">
+                        ${formatDescription(eventData.description)}
+                    </div>
+                    ${eventData.keywords ? `
+                        <div class="event-keywords">
+                            <strong>关键词：</strong>${eventData.keywords}
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${renderSourcesSection()}
+                ${renderAnalysisSection()}
+                ${renderVotingSection()}
+
+                <div class="actions">
+                    <button class="btn" onclick="toggleInterest()" ${!currentUser ? 'disabled title="请先登录"' : ''}>
+                        ${eventData.user_interested ? '取消关注' : '关注此事件'}
+                    </button>
+                    <button class="btn btn-primary" onclick="shareEvent()">分享</button>
+                    ${renderAdminActions()}
+                    <a href="./index.html" class="btn">返回列表</a>
+                </div>
+            `;
+        }
+
+        // 渲染管理员操作按钮
+        function renderAdminActions() {
+            // 只有管理员才能看到管理操作
+            if (!currentUser || currentUser.role !== 'admin') {
+                return '';
+            }
+
+            let actions = '';
+
+            // 根据当前状态显示相应的操作按钮
+            switch (eventData.status) {
+                case 'pending':
+                    actions = '<button class="btn btn-primary" onclick="approveEvent()">审核通过</button>';
+                    break;
+                case 'nominated':
+                    actions = '<button class="btn btn-warning" onclick="startAIProcessing()">开始AI分析</button>';
+                    break;
+                case 'processing':
+                    actions = '<div class="ai-processing-status"><i class="loading-icon">⏳</i> AI分析中，请稍候...</div>';
+                    break;
+                case 'voting':
+                    actions = '<button class="btn btn-info" onclick="viewVoteDetails()">查看投票详情</button>';
+                    break;
+            }
+
+            return actions;
+        }
+
+        // 渲染投票区域
+        function renderVotingSection() {
+            // 在投票阶段和已确认阶段显示投票区域
+            if (eventData.status !== 'voting' && eventData.status !== 'confirmed') {
+                return '';
+            }
+
+            if (!currentUser) {
+                return `
+                    <div class="voting-section">
+                        <div class="login-prompt">
+                            <p>请先 <a href="./auth.html">登录</a> 后参与投票</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 投票统计数据（使用现有字段或默认值）
+            const totalVotes = eventData.vote_count || 0;
+            const supportVotes = eventData.support_votes || 0;
+            const opposeVotes = eventData.oppose_votes || 0;
+            const supportPercentage = totalVotes > 0 ? (supportVotes / totalVotes * 100) : 0;
+            const opposePercentage = totalVotes > 0 ? (opposeVotes / totalVotes * 100) : 0;
+
+            // 如果用户已投票或事件已确认，显示投票结果
+            if (userVote || eventData.status === 'confirmed') {
+                return `
+                    <div class="voting-section">
+                        <div class="voting-header">
+                            <h3 class="voting-title">${eventData.status === 'confirmed' ? 'AI分析结果评价' : '您认为AI分析结果如何？'}</h3>
+                            <span class="vote-count">共 ${totalVotes} 人投票</span>
+                            ${eventData.status === 'confirmed' ? '<span class="status-badge confirmed">投票已结束</span>' : ''}
+                        </div>
+
+                        <div class="vote-progress">
+                            <div class="progress-bar-dual">
+                                <div class="progress-fill support" style="width: ${supportPercentage}%"></div>
+                                <div class="progress-fill oppose" style="width: ${opposePercentage}%"></div>
+                            </div>
+                            <div class="vote-stats">
+                                <span class="support-stat">认同 ${supportPercentage.toFixed(1)}% (${supportVotes}票)</span>
+                                <span class="oppose-stat">不认同 ${opposePercentage.toFixed(1)}% (${opposeVotes}票)</span>
+                            </div>
+                        </div>
+
+                        ${userVote && eventData.status === 'voting' ? `
+                            <div class="vote-result">
+                                <p>您的投票：<strong>${userVote.stance === 'support' ? '认同' : '不认同'}</strong></p>
+                                <button class="btn btn-secondary" onclick="changeVote()">修改投票</button>
+                            </div>
+                        ` : userVote && eventData.status === 'confirmed' ? `
+                            <div class="vote-result">
+                                <p>您的投票：<strong>${userVote.stance === 'support' ? '认同' : '不认同'}</strong></p>
+                                <p class="vote-final">投票已结束，无法修改</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // 如果事件已确认，只显示结果不显示投票按钮
+            if (eventData.status === 'confirmed') {
+                return `
+                    <div class="voting-section">
+                        <div class="voting-header">
+                            <h3 class="voting-title">AI分析结果评价</h3>
+                            <span class="vote-count">共 ${totalVotes} 人投票</span>
+                            <span class="status-badge confirmed">投票已结束</span>
+                        </div>
+
+                        <div class="vote-progress">
+                            <div class="progress-bar-dual">
+                                <div class="progress-fill support" style="width: ${supportPercentage}%"></div>
+                                <div class="progress-fill oppose" style="width: ${opposePercentage}%"></div>
+                            </div>
+                            <div class="vote-stats">
+                                <span class="support-stat">认同 ${supportPercentage.toFixed(1)}% (${supportVotes}票)</span>
+                                <span class="oppose-stat">不认同 ${opposePercentage.toFixed(1)}% (${opposeVotes}票)</span>
+                            </div>
+                        </div>
+
+                        <div class="vote-final-message">
+                            <p>投票已达到20票阈值，投票阶段结束。</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 投票阶段，显示投票按钮
+            return `
+                <div class="voting-section">
+                    <div class="voting-header">
+                        <h3 class="voting-title">您认为AI分析结果如何？</h3>
+                        <span class="vote-count">共 ${totalVotes} 人投票</span>
+                    </div>
+
+                    <div class="vote-question">
+                        <p>请基于上述AI分析和信息源，对AI的分析结果进行评价：</p>
+                    </div>
+
+                    ${totalVotes > 0 ? `
+                        <div class="vote-progress">
+                            <div class="progress-bar-dual">
+                                <div class="progress-fill support" style="width: ${supportPercentage}%"></div>
+                                <div class="progress-fill oppose" style="width: ${opposePercentage}%"></div>
+                            </div>
+                            <div class="vote-stats">
+                                <span class="support-stat">认同 ${supportPercentage.toFixed(1)}% (${supportVotes}票)</span>
+                                <span class="oppose-stat">不认同 ${opposePercentage.toFixed(1)}% (${opposeVotes}票)</span>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="vote-buttons">
+                        <button class="vote-btn support" onclick="vote('support')">
+                            <span class="vote-text">认同AI分析</span>
+                            <span class="vote-desc">分析合理，结论可信</span>
+                        </button>
+                        <button class="vote-btn oppose" onclick="vote('oppose')">
+                            <span class="vote-text">不认同AI分析</span>
+                            <span class="vote-desc">分析有误，结论存疑</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 渲染AI分析区域
+        function renderAnalysisSection() {
+            // 在投票阶段和已确认阶段显示AI分析结果
+            if ((eventData.status !== 'voting' && eventData.status !== 'confirmed') || !eventData.ai_summary) {
+                return '';
+            }
+
+            // AI评级的显示映射
+            const ratingClasses = {
+                'reliable': 'rating-reliable',
+                'questionable': 'rating-questionable',
+                'unreliable': 'rating-unreliable',
+                'insufficient': 'rating-insufficient'
+            };
+
+            const ratingTexts = {
+                'reliable': '可信',
+                'questionable': '存疑',
+                'unreliable': '不可信',
+                'insufficient': '信息不足'
+            };
+
+            const ratingClass = ratingClasses[eventData.ai_rating] || 'rating-insufficient';
+            const ratingText = ratingTexts[eventData.ai_rating] || '信息不足';
+
+            return `
+                <div class="ai-analysis-section">
+                    <h3 class="ai-analysis-title">AI智能分析</h3>
+                    <div class="ai-rating-badge ${ratingClass}">
+                        AI评级：${ratingText}
+                    </div>
+                    <div class="ai-summary-content">
+                        ${eventData.ai_summary}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 渲染信息源区域
+        function renderSourcesSection() {
+            // 在投票阶段和已确认阶段显示信息源
+            if ((eventData.status !== 'voting' && eventData.status !== 'confirmed') || !eventData.information_sources || eventData.information_sources.length === 0) {
+                return '';
+            }
+
+            return `
+                <div class="sources-section">
+                    <h3 class="sources-title">信息来源</h3>
+                    <div class="source-list">
+                        ${eventData.information_sources.map((source, index) => `
+                            <div class="source-item">
+                                <div class="source-title">${source.title || '信息源 ' + (index + 1)}</div>
+                                <div class="source-meta">
+                                    <span>${source.website_name || '未知来源'}</span>
+                                    <span>相关度: ${Math.round((source.relevance_score || 0) * 100)}%</span>
+                                </div>
+                                <a href="${source.url}" target="_blank" class="source-url">${source.url}</a>
+                                ${source.ai_summary ? `<div class="source-summary">AI摘要：${source.ai_summary}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 格式化描述文本
+        function formatDescription(description) {
+            return description.split('\n').map(paragraph => 
+                paragraph.trim() ? `<p>${paragraph.trim()}</p>` : ''
+            ).join('');
+        }
+
+        // 投票功能（使用真实API）
+        async function vote(stance) {
+            if (!currentUser) {
+                alert('请先登录');
+                window.location.href = './auth.html';
+                return;
+            }
+
+            try {
+                // 禁用投票按钮
+                const voteButtons = document.querySelectorAll('.vote-btn');
+                voteButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.textContent = '投票中...';
+                });
+
+                // 调用投票API
+                const voteResult = await api.apiCall('/votes/', {
+                    method: 'POST',
+                    headers: {
+                        'x-user-id': currentUser.id.toString()
+                    },
+                    body: JSON.stringify({
+                        event_id: eventData.id,
+                        stance: stance
+                    })
+                });
+
+                if (voteResult) {
+                    // 记录用户投票 - 创建正确的用户投票对象
+                    userVote = {
+                        id: voteResult.vote_id,
+                        stance: stance,
+                        user_id: currentUser.id,
+                        event_id: eventData.id
+                    };
+
+                    // 重新加载事件数据以获取最新的投票统计
+                    const updatedEvent = await api.getEventDetail(eventData.id);
+                    eventData.vote_count = updatedEvent.vote_count;
+                    eventData.support_votes = updatedEvent.support_votes;
+                    eventData.oppose_votes = updatedEvent.oppose_votes;
+
+                    // 重新渲染页面
+                    renderEvent();
+
+                    alert(`投票成功！您选择了"${stance === 'support' ? '认同' : '不认同'}"`);
+                }
+                
+            } catch (error) {
+                console.error('投票失败:', error);
+                
+                if (error.message.includes('已经对此事件投过票')) {
+                    alert('您已经投过票了，每人每事件只能投票一次');
+                } else {
+                    alert('投票失败: ' + error.message);
+                }
+                
+                // 恢复按钮状态
+                setTimeout(() => {
+                    renderEvent();
+                }, 1000);
+            }
+        }
+
+        // 修改投票
+        async function changeVote() {
+            if (!userVote) return;
+
+            if (confirm('确定要修改投票吗？')) {
+                try {
+                    // 获取当前用户ID
+                    const currentUserId = currentUser ? currentUser.id : 1;
+
+                    // 调用删除投票API，传递用户ID
+                    await api.apiCall(`/votes/${userVote.id}?current_user_id=${currentUserId}`, {
+                        method: 'DELETE'
+                    });
+
+                    userVote = null;
+
+                    // 重新加载事件数据以获取最新的投票统计
+                    const updatedEvent = await api.getEventDetail(eventData.id);
+                    eventData.vote_count = updatedEvent.vote_count;
+                    eventData.support_votes = updatedEvent.support_votes;
+                    eventData.oppose_votes = updatedEvent.oppose_votes;
+
+                    renderEvent();
+                    alert('投票已取消，您可以重新投票');
+                } catch (error) {
+                    console.error('修改投票失败:', error);
+                    alert('修改投票失败: ' + error.message);
+                }
+            }
+        }
+
+        // 切换关注状态（使用真实API）
+        async function toggleInterest() {
+            if (!currentUser) {
+                alert('请先登录');
+                window.location.href = './auth.html';
+                return;
+            }
+            
+            try {
+                if (eventData.user_interested) {
+                    await api.removeInterest(eventData.id);
+                    eventData.user_interested = false;
+                    eventData.interest_count--;
+                    alert('取消关注成功！');
+                } else {
+                    await api.addInterest(eventData.id);
+                    eventData.user_interested = true;
+                    eventData.interest_count++;
+                    alert('关注成功！');
+                }
+                
+                renderEvent();
+                
+            } catch (error) {
+                if (error.message.includes('已经添加过')) {
+                    // 状态不同步，重新获取
+                    eventData.user_interested = true;
+                    renderEvent();
+                } else {
+                    alert('操作失败: ' + error.message);
+                }
+            }
+        }
+
+        // 分享事件
+        function shareEvent() {
+            const url = window.location.href;
+            const title = `真相之镜 - ${eventData.title}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    text: eventData.description.substring(0, 100) + '...',
+                    url: url
+                });
+            } else {
+                // 复制链接到剪贴板
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('链接已复制到剪贴板');
+                }).catch(() => {
+                    // 降级方案：显示链接
+                    prompt('请复制以下链接:', url);
+                });
+            }
+        }
+
+        // 显示错误
+        function showError(message) {
+            document.getElementById('event-detail').innerHTML = `
+                <div class="event-header">
+                    <h1 class="event-title">连接错误</h1>
+                </div>
+                <div class="event-content">
+                    <p>${message}</p>
+                    <button class="btn btn-primary" onclick="location.reload()">重新加载</button>
+                    <a href="./index.html" class="btn">返回首页</a>
+                </div>
+            `;
+        }
+
+        // 管理员操作：审核通过
+        async function approveEvent() {
+            if (!confirm('确定要审核通过此事件吗？事件将进入提名阶段。')) {
+                return;
+            }
+
+            try {
+                const api = new TruthMirrorAPI();
+                await api.apiCall(`/events/${eventData.id}/approve`, {
+                    method: 'POST'
+                });
+
+                alert('事件审核通过！已进入提名阶段。');
+                location.reload(); // 刷新页面显示新状态
+            } catch (error) {
+                alert('审核失败: ' + error.message);
+            }
+        }
+
+        // 管理员操作：开始AI处理
+        async function startAIProcessing() {
+            if (!confirm('确定要开始AI分析吗？')) {
+                return;
+            }
+
+            try {
+                const api = new TruthMirrorAPI();
+                await api.apiCall(`/events/${eventData.id}/start-ai-processing`, {
+                    method: 'POST'
+                });
+
+                alert('AI分析已开始！');
+                location.reload(); // 刷新页面显示新状态
+            } catch (error) {
+                alert('操作失败: ' + error.message);
+            }
+        }
+
+        // AI分析是自动完成的，不需要手动操作
+
+        // 管理员操作：查看投票详情
+        async function viewVoteDetails() {
+            try {
+                const api = new TruthMirrorAPI();
+
+                // 获取投票统计数据
+                const stats = await api.getVoteStats(eventData.id);
+
+                // 如果没有统计数据，使用事件数据中的投票信息
+                const totalVotes = stats?.total_votes || eventData.vote_count || 0;
+                const supportVotes = stats?.support_votes || eventData.support_votes || 0;
+                const opposeVotes = stats?.oppose_votes || eventData.oppose_votes || 0;
+                const supportPercentage = totalVotes > 0 ? ((supportVotes / totalVotes) * 100).toFixed(1) : 0;
+                const opposePercentage = totalVotes > 0 ? ((opposeVotes / totalVotes) * 100).toFixed(1) : 0;
+
+                const message = `投票详情：
+总投票数：${totalVotes}
+认同票：${supportVotes} (${supportPercentage}%)
+不认同票：${opposeVotes} (${opposePercentage}%)`;
+
+                alert(message);
+            } catch (error) {
+                console.error('获取投票详情失败:', error);
+
+                // 如果API调用失败，使用事件数据中的投票信息作为备选
+                const totalVotes = eventData.vote_count || 0;
+                const supportVotes = eventData.support_votes || 0;
+                const opposeVotes = eventData.oppose_votes || 0;
+                const supportPercentage = totalVotes > 0 ? ((supportVotes / totalVotes) * 100).toFixed(1) : 0;
+                const opposePercentage = totalVotes > 0 ? ((opposeVotes / totalVotes) * 100).toFixed(1) : 0;
+
+                const message = `投票详情：
+总投票数：${totalVotes}
+认同票：${supportVotes} (${supportPercentage}%)
+不认同票：${opposeVotes} (${opposePercentage}%)`;
+
+                alert(message);
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>

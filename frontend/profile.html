@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 真相之镜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* 顶部导航 */
+        header {
+            background: white;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            color: #2c5aa0;
+        }
+
+        .back-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: #2c5aa0;
+        }
+
+        /* 主要内容 */
+        main {
+            padding: 30px 0;
+        }
+
+        .profile-container {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .profile-header {
+            background: #f8f9fa;
+            padding: 30px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #2c5aa0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+
+        .username {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .user-role {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .role-admin {
+            background: #ff4757;
+            color: white;
+        }
+
+        .role-user {
+            background: #2c5aa0;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .section {
+            border-top: 1px solid #eee;
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        /* 个人信息卡片样式 */
+        .info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 18px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .info-value.empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .activity-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .activity-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #2c5aa0;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .activity-meta {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .login-prompt {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+        }
+
+        .login-prompt h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .login-prompt p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #666;
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #f8f9fa;
+        }
+
+        .btn-primary {
+            background: #2c5aa0;
+            color: white;
+            border-color: #2c5aa0;
+        }
+
+        .btn-primary:hover {
+            background: #1e3d72;
+        }
+
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* 编辑表单样式 */
+        .edit-form {
+            display: none;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 35px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .edit-form.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .edit-form h3 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .edit-form h3::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 18px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .form-input:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-note {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-cancel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        }
+
+        /* 设置页面按钮样式 */
+        .settings-actions {
+            display: grid;
+            gap: 15px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .settings-btn {
+            padding: 15px 20px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .settings-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-color: #2c5aa0;
+        }
+
+        .settings-btn-edit {
+            border-left: 4px solid #2c5aa0;
+        }
+
+        .settings-btn-edit:hover {
+            background: #f8f9ff;
+        }
+
+        .settings-btn-clear {
+            border-left: 4px solid #ffc107;
+        }
+
+        .settings-btn-clear:hover {
+            background: #fffbf0;
+        }
+
+        .settings-btn-logout {
+            border-left: 4px solid #dc3545;
+        }
+
+        .settings-btn-logout:hover {
+            background: #fff5f5;
+        }
+
+        .profile-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 0;
+        }
+
+        .tab-button {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-button.active {
+            color: #2c5aa0;
+            border-bottom-color: #2c5aa0;
+        }
+
+        .tab-button:hover {
+            color: #2c5aa0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .profile-header,
+            .stats-grid,
+            .section {
+                padding: 20px 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .activity-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+
+    <main>
+        <div class="container">
+            <div id="main-content">
+                <!-- 内容将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 引入API管理器 -->
+    <script src="./js/api.js"></script>
+    <script>
+        let currentUser = null;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查用户登录状态
+            const userStr = localStorage.getItem('currentUser');
+            if (userStr) {
+                try {
+                    currentUser = JSON.parse(userStr);
+                    renderProfile();
+                } catch (error) {
+                    console.error('解析用户信息失败:', error);
+                    renderLoginPrompt();
+                }
+            } else {
+                renderLoginPrompt();
+            }
+        });
+
+        // 渲染登录提示
+        function renderLoginPrompt() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="login-prompt">
+                    <h2>请先登录</h2>
+                    <p>请先登录查看个人中心信息</p>
+                    <a href="./auth.html" class="btn btn-primary">立即登录</a>
+                </div>
+            `;
+        }
+
+        // 渲染用户个人中心
+        async function renderProfile() {
+            try {
+                // 显示加载状态
+                document.getElementById('main-content').innerHTML = `
+                    <div class="profile-container">
+                        <div class="profile-header">
+                            <div class="username">加载中...</div>
+                            <p>正在获取用户信息，请稍候</p>
+                        </div>
+                    </div>
+                `;
+
+                // 使用当前用户信息（已经是最新的）
+                let userInfo = currentUser;
+
+                // 生成用户统计数据
+                const stats = await generateUserStats(userInfo);
+
+                document.getElementById('main-content').innerHTML = `
+                    <!-- 个人信息编辑表单 -->
+                    <div class="edit-form" id="editForm">
+                        <h3>编辑个人信息</h3>
+                        <form id="profileForm" onsubmit="handleFormSubmit(event)">
+                            <div class="form-group">
+                                <label class="form-label">用户名</label>
+                                <input type="text" class="form-input" id="editUsername" value="${userInfo.username}" disabled>
+                                <div class="form-note">用户名不可修改</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">昵称</label>
+                                <input type="text" class="form-input" id="editNickname" value="${userInfo.nickname || ''}" placeholder="请输入您的昵称">
+                                <div class="form-note">显示给其他用户的名称</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">邮箱</label>
+                                <input type="email" class="form-input" id="editEmail" value="${userInfo.email || ''}" placeholder="请输入您的邮箱地址">
+                                <div class="form-note">用于接收重要通知和找回密码</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">个人简介</label>
+                                <textarea class="form-input form-textarea" id="editBio" placeholder="介绍一下自己，让其他用户更好地了解您...">${userInfo.bio || ''}</textarea>
+                                <div class="form-note">简单介绍您的背景、兴趣或专业领域</div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-cancel" onclick="cancelEdit()">取消</button>
+                                <button type="submit" class="btn btn-success">保存修改</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="profile-container">
+                        <div class="profile-header">
+                            <div class="avatar">${userInfo.username.charAt(0).toUpperCase()}</div>
+                            <div class="username">${userInfo.nickname || userInfo.username}</div>
+                            <span class="user-role role-${userInfo.role}">
+                                ${userInfo.role === 'admin' ? '管理员' : '普通用户'}
+                            </span>
+                        </div>
+
+                        <!-- 标签页导航 -->
+                        <div class="profile-tabs">
+                            <button class="tab-button active" onclick="switchTab('overview')">概览</button>
+                            <button class="tab-button" onclick="switchTab('settings')">设置</button>
+                        </div>
+
+                        <!-- 概览标签页 -->
+                        <div class="tab-content active" id="overview-tab">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-number">${stats.submittedEvents}</div>
+                                    <div class="stat-label">提交的事件</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">${stats.votesCount}</div>
+                                    <div class="stat-label">参与投票</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">${stats.interestsCount}</div>
+                                    <div class="stat-label">关注的事件</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">${stats.joinDays}</div>
+                                    <div class="stat-label">加入天数</div>
+                                </div>
+                            </div>
+
+                            <div class="section">
+                                <h3 class="section-title">个人信息</h3>
+                                <div class="info-card">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <div class="info-label">用户名</div>
+                                            <div class="info-value">${userInfo.username}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">昵称</div>
+                                            <div class="info-value">${userInfo.nickname || '<span class="empty">未设置</span>'}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">邮箱</div>
+                                            <div class="info-value">${userInfo.email || '<span class="empty">未设置</span>'}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">注册时间</div>
+                                            <div class="info-value">${formatDate(userInfo.created_at)}</div>
+                                        </div>
+                                        <div class="info-item" style="grid-column: 1 / -1;">
+                                            <div class="info-label">个人简介</div>
+                                            <div class="info-value">${userInfo.bio || '<span class="empty">这个人很懒，什么都没留下...</span>'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <!-- 设置标签页 -->
+                        <div class="tab-content" id="settings-tab">
+                            <div class="section">
+                                <h3 class="section-title">账户设置</h3>
+                                <div class="settings-actions">
+                                    <button class="settings-btn settings-btn-edit" onclick="showEditForm()">
+                                        <span>编辑</span>
+                                        <span>编辑个人信息</span>
+                                    </button>
+                                    <button class="settings-btn settings-btn-clear" onclick="clearData()">
+                                        <span>清理</span>
+                                        <span>清除本地数据</span>
+                                    </button>
+                                    <button class="settings-btn settings-btn-logout" onclick="logout()">
+                                        <span>退出</span>
+                                        <span>退出登录</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('渲染个人中心失败:', error);
+                document.getElementById('main-content').innerHTML = `
+                    <div class="profile-container">
+                        <div class="profile-header">
+                            <h2>加载失败</h2>
+                            <p>获取个人信息失败，请稍后重试</p>
+                            <button class="btn btn-primary" onclick="renderProfile()">重新加载</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 生成用户统计数据（仅从API获取真实数据）
+        async function generateUserStats(userInfo) {
+            const joinDate = new Date(userInfo.created_at || Date.now());
+            const joinDays = Math.floor((Date.now() - joinDate.getTime()) / (24 * 60 * 60 * 1000));
+
+            let stats = {
+                submittedEvents: 0,
+                votesCount: 0,
+                interestsCount: 0,
+                joinDays: Math.max(1, joinDays)
+            };
+
+            // 尝试获取用户创建的事件数量
+            const response = await api.getEvents({ skip: 0, limit: 1000 });
+            const events = response.events || response; // 适配新的响应格式
+            stats.submittedEvents = events.filter(event => event.creator_id === userInfo.id).length;
+
+            // 其他统计数据目前无法通过API获取，显示为0
+            stats.votesCount = 0;
+            stats.interestsCount = 0;
+
+            return stats;
+        }
+
+
+
+        // 格式化相对日期
+        function formatRelativeDate(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffInMs = now - date;
+            const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+            const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+            if (diffInMinutes < 60) {
+                return diffInMinutes <= 1 ? '刚刚' : `${diffInMinutes}分钟前`;
+            } else if (diffInHours < 24) {
+                return `${diffInHours}小时前`;
+            } else if (diffInDays < 7) {
+                return `${diffInDays}天前`;
+            } else {
+                return date.toLocaleDateString('zh-CN');
+            }
+        }
+
+        // 清除本地数据
+        function clearData() {
+            if (confirm('确定要清除所有本地数据吗？这将清除登录状态和所有缓存信息。')) {
+                localStorage.clear();
+                alert('本地数据已清除');
+                window.location.href = './index.html';
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('currentUser');
+                alert('已退出登录');
+                window.location.href = './index.html';
+            }
+        }
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 移除所有活动状态
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // 激活当前标签
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // 显示编辑表单
+        function showEditForm() {
+            document.getElementById('editForm').classList.add('active');
+            document.querySelector('.profile-container').style.display = 'none';
+        }
+
+        // 取消编辑
+        function cancelEdit() {
+            document.getElementById('editForm').classList.remove('active');
+            document.querySelector('.profile-container').style.display = 'block';
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '未知';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // 处理表单提交
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            await saveProfile();
+        }
+
+        // 保存个人信息
+        async function saveProfile() {
+            try {
+                const formData = {
+                    nickname: document.getElementById('editNickname').value.trim(),
+                    email: document.getElementById('editEmail').value.trim(),
+                    bio: document.getElementById('editBio').value.trim()
+                };
+
+                // 验证邮箱格式
+                if (formData.email && !isValidEmail(formData.email)) {
+                    alert('请输入有效的邮箱地址');
+                    return;
+                }
+
+                // 调用API更新用户信息
+                const updatedUser = await api.updateUser(currentUser.id, formData);
+
+                // 更新本地存储的用户信息
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                currentUser = updatedUser;
+
+                alert('个人信息更新成功！');
+                cancelEdit();
+
+                // 重新渲染页面，使用更新后的用户信息
+                await renderProfile();
+            } catch (error) {
+                console.error('保存个人信息失败:', error);
+                alert(`保存失败: ${error.message}`);
+            }
+        }
+
+        // 验证邮箱格式
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+    </script>
+
+    <!-- 引入导航栏组件 -->
+    <script src="./js/nav.js"></script>
+</body>
+</html>
