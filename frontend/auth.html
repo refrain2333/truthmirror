@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - 真相之镜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            border: 1px solid #e1e5e9;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header h1 {
+            color: #2c5aa0;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        .auth-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            font-size: 16px;
+        }
+
+        .tab-button.active {
+            color: #2c5aa0;
+            border-bottom-color: #2c5aa0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2c5aa0;
+            box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #2c5aa0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .btn:hover {
+            background: #1e3d72;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .form-footer {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-footer a {
+            color: #2c5aa0;
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: #2c5aa0;
+        }
+
+        /* 开发工具面板 */
+        .dev-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            max-width: 200px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dev-panel h4 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .dev-panel button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            background: #f8f9fa;
+            color: #666;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .dev-panel button:hover {
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>真相之镜</h1>
+            <p>基于事实的真相验证平台</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button class="tab-button active" onclick="switchTab('login')">登录</button>
+            <button class="tab-button" onclick="switchTab('register')">注册</button>
+        </div>
+
+        <div id="message-area"></div>
+
+        <!-- 登录表单 -->
+        <form id="login-form" style="display: block;">
+            <div class="form-group">
+                <label for="login-username">用户名</label>
+                <input type="text" id="login-username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">密码</label>
+                <input type="password" id="login-password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn">登录</button>
+            <div class="form-footer">
+                <p>还没有账号？<a href="#" onclick="switchTab('register')">立即注册</a></p>
+            </div>
+        </form>
+
+        <!-- 注册表单 -->
+        <form id="register-form" style="display: none;">
+            <div class="form-group">
+                <label for="register-username">用户名</label>
+                <input type="text" id="register-username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="register-email">邮箱</label>
+                <input type="email" id="register-email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="register-password">密码</label>
+                <input type="password" id="register-password" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="register-confirm">确认密码</label>
+                <input type="password" id="register-confirm" class="form-control" required>
+            </div>
+            <button type="submit" class="btn">注册</button>
+            <div class="form-footer">
+                <p>已有账号？<a href="#" onclick="switchTab('login')">立即登录</a></p>
+            </div>
+        </form>
+    </div>
+
+    <!-- 开发工具面板 -->
+    <div class="dev-panel">
+        <h4>开发工具</h4>
+        <button onclick="quickLogin('user')">测试用户登录</button>
+        <button onclick="quickLogin('admin')">管理员登录</button>
+    </div>
+
+    <!-- 返回首页链接 -->
+    <a href="./index.html" class="back-link">← 返回首页</a>
+
+    <!-- 登录注册页面不需要导航栏 -->
+    <!-- 引入API管理器 -->
+    <script src="./js/api.js"></script>
+    <script>
+        // 当前活动的表单
+        let currentTab = 'login';
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            
+            // 检查URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
+            if (mode === 'register') {
+                switchTab('register');
+            }
+        });
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('register-form').addEventListener('submit', handleRegister);
+        }
+
+        // 切换标签
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // 更新标签按钮状态
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            // 显示/隐藏表单
+            document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+            
+            // 清空消息
+            clearMessages();
+        }
+
+        // 处理登录（使用真实API）
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showMessage('请填写完整的登录信息', 'error');
+                return;
+            }
+
+            // 禁用提交按钮
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '登录中...';
+
+            try {
+                // 使用简化的认证方式
+                const user = await authenticateUser(username, password);
+                
+                if (user) {
+                    showMessage('登录成功！正在跳转...', 'success');
+                    
+                    // 保存用户信息到localStorage
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    
+                    // 延迟跳转
+                    setTimeout(() => {
+                        window.location.href = './index.html';
+                    }, 1500);
+                } else {
+                    showMessage('用户名或密码错误', 'error');
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                showMessage('登录失败: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        // 处理注册（使用真实API）
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm').value;
+            
+            // 表单验证
+            if (!username || !email || !password || !confirmPassword) {
+                showMessage('请填写完整的注册信息', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage('密码长度至少6位', 'error');
+                return;
+            }
+
+            // 邮箱格式验证
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('邮箱格式不正确', 'error');
+                return;
+            }
+
+            // 禁用提交按钮
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '注册中...';
+
+            try {
+                // 调用注册API
+                const newUser = await api.createUser({
+                    username: username,
+                    email: email,
+                    password: password
+                });
+                
+                if (newUser) {
+                    showMessage('注册成功！请登录', 'success');
+                    
+                    // 切换到登录表单并填入用户名
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('login-username').value = username;
+                        document.getElementById('login-username').focus();
+                    }, 1500);
+                } else {
+                    showMessage('注册失败，请稍后重试', 'error');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                if (error.message.includes('用户名已存在')) {
+                    showMessage('用户名已存在，请选择其他用户名', 'error');
+                } else if (error.message.includes('邮箱已注册')) {
+                    showMessage('邮箱已注册，请使用其他邮箱或直接登录', 'error');
+                } else if (error.message.includes('服务器内部错误')) {
+                    showMessage('服务器暂时不可用，请稍后重试', 'error');
+                } else if (error.message.includes('网络连接失败')) {
+                    showMessage('无法连接到服务器，请检查网络连接', 'error');
+                } else {
+                    showMessage('注册失败: ' + error.message, 'error');
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        // 用户认证（使用正确的登录API）
+        async function authenticateUser(username, password) {
+            // 特殊账号快速登录（用于演示）
+            if ((username === 'admin' && password === 'admin123') || 
+                (username === 'user' && password === 'user123')) {
+                return {
+                    id: username === 'admin' ? 1 : 2,
+                    username: username,
+                    email: username + '@truthmirror.com',
+                    role: username === 'admin' ? 'admin' : 'user',
+                    is_active: true,
+                    created_at: new Date().toISOString()
+                };
+            }
+
+            // 使用后端登录API进行认证
+            try {
+                const response = await fetch(`${api.baseUrl}/users/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    return user;
+                }
+                
+                // 处理HTTP错误响应
+                const errorData = await response.json().catch(() => ({ detail: '登录请求失败' }));
+                throw new Error(errorData.detail || '用户名或密码错误');
+                
+            } catch (error) {
+                if (error.message) {
+                    throw error;
+                }
+                throw new Error('网络连接失败，请检查网络状态');
+            }
+        }
+
+        // 显示消息
+        function showMessage(message, type) {
+            const messageArea = document.getElementById('message-area');
+            const className = type === 'error' ? 'error-message' : 'success-message';
+            
+            messageArea.innerHTML = `
+                <div class="${className}">
+                    ${message}
+                </div>
+            `;
+
+            // 自动清除成功消息
+            if (type === 'success') {
+                setTimeout(() => {
+                    clearMessages();
+                }, 3000);
+            }
+        }
+
+        // 清空消息
+        function clearMessages() {
+            document.getElementById('message-area').innerHTML = '';
+        }
+
+        // 快速登录（开发工具）
+        async function quickLogin(type) {
+            const credentials = type === 'admin' 
+                ? { username: 'admin', password: 'admin123' }
+                : { username: 'user', password: 'user123' };
+            
+            document.getElementById('login-username').value = credentials.username;
+            document.getElementById('login-password').value = credentials.password;
+            
+            // 切换到登录表单
+            switchTab('login');
+            
+            // 触发登录
+            setTimeout(() => {
+                const form = document.getElementById('login-form');
+                form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            }, 100);
+        }
+    </script>
+</body>
+</html>

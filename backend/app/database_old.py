@@ -14,8 +14,19 @@ Base = declarative_base()
 
 # 依赖注入：获取数据库会话
 def get_db():
-    db = SessionLocal()
     try:
+        db = SessionLocal()
         yield db
+    except Exception as e:
+        print(f"数据库连接错误: {e}")
+        # 即使数据库连接失败也要确保session被关闭
+        try:
+            db.close()
+        except:
+            pass
+        raise
     finally:
-        db.close()
+        try:
+            db.close()
+        except:
+            pass

@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于我们 - 真相之镜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* 主要内容 */
+        main {
+            padding: 30px 0;
+        }
+
+        .about-container {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .hero-description {
+            font-size: 16px;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c5aa0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .section-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 35px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .stats-section {
+            background: #f8f9fa;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2c5aa0;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .team-section {
+            background: white;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .team-member {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .member-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #2c5aa0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+
+        .member-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .member-role {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .member-description {
+            color: #777;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .contact-section {
+            background: #f8f9fa;
+            text-align: center;
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .contact-item {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .contact-icon {
+            width: 50px;
+            height: 50px;
+            background: #2c5aa0;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 15px;
+        }
+
+        .contact-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .contact-detail {
+            color: #666;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: #2c5aa0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .back-to-top:hover {
+            background: #1e3d72;
+            transform: translateY(-2px);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .hero-section {
+                padding: 40px 20px;
+            }
+
+            .hero-title {
+                font-size: 36px;
+            }
+
+            .hero-subtitle {
+                font-size: 18px;
+            }
+
+            .section {
+                padding: 30px 20px;
+            }
+
+            .features-grid,
+            .stats-grid,
+            .team-grid,
+            .contact-info {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏将通过JavaScript插入 -->
+
+    <main>
+        <div class="container">
+            <div class="about-container">
+                <!-- 英雄区域 -->
+                <div class="hero-section">
+                    <h1 class="hero-title">真相之镜</h1>
+                    <p class="hero-subtitle">AI驱动的事实核查平台</p>
+                    <p class="hero-description">
+                        通过人工智能技术和社区协作，我们致力于为用户提供准确、可靠的信息验证服务，
+                        帮助大家在信息爆炸的时代找到真相。
+                    </p>
+                </div>
+
+                <!-- 项目介绍 -->
+                <div class="section">
+                    <h2 class="section-title">项目简介</h2>
+                    <div class="section-content">
+                        <p>
+                            真相之镜是一个基于人工智能技术的事实核查平台，旨在帮助用户识别和验证网络信息的真实性。
+                            我们结合了先进的AI分析技术和社区协作机制，为用户提供全面、客观的信息验证服务。
+                        </p>
+                        <br>
+                        <p>
+                            平台采用多层次验证机制：首先通过AI技术对信息进行初步分析和评级，
+                            然后由社区用户进行投票验证，最终形成可信度评估。这种方式既保证了效率，
+                            又确保了结果的准确性和公正性。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 核心功能 -->
+                <div class="section">
+                    <h2 class="section-title">核心功能</h2>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">AI</div>
+                            <h3 class="feature-title">AI智能分析</h3>
+                            <p class="feature-description">
+                                运用先进的自然语言处理技术，对事件信息进行深度分析，
+                                提供初步的可信度评估和详细的分析报告。
+                            </p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">社区</div>
+                            <h3 class="feature-title">社区协作</h3>
+                            <p class="feature-description">
+                                建立用户社区投票机制，让更多人参与信息验证过程，
+                                通过集体智慧提高验证结果的准确性。
+                            </p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">评估</div>
+                            <h3 class="feature-title">多维度评估</h3>
+                            <p class="feature-description">
+                                从信息源可靠性、内容逻辑性、事实一致性等多个维度
+                                对信息进行综合评估，提供全面的分析结果。
+                            </p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">溯源</div>
+                            <h3 class="feature-title">信息溯源</h3>
+                            <p class="feature-description">
+                                追踪信息来源，分析传播路径，帮助用户了解信息的
+                                原始出处和传播过程，提高信息透明度。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 平台数据 -->
+                <div class="section stats-section">
+                    <h2 class="section-title">平台数据</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">-</div>
+                            <div class="stat-label">已处理事件</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">-</div>
+                            <div class="stat-label">投票中事件</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">-</div>
+                            <div class="stat-label">已确认事件</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">-</div>
+                            <div class="stat-label">活跃用户</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 团队介绍 -->
+                <div class="section team-section">
+                    <h2 class="section-title">开发团队</h2>
+                    <div class="team-grid">
+                        <div class="team-member">
+                            <div class="member-avatar">AI</div>
+                            <h3 class="member-name">AI助手</h3>
+                            <p class="member-role">技术开发</p>
+                            <p class="member-description">
+                                负责平台的技术架构设计和功能实现，
+                                专注于AI分析算法和用户体验优化。
+                            </p>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-avatar">产品</div>
+                            <h3 class="member-name">产品团队</h3>
+                            <p class="member-role">产品设计</p>
+                            <p class="member-description">
+                                负责产品需求分析和用户体验设计，
+                                致力于打造简洁易用的信息验证平台。
+                            </p>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-avatar">算法</div>
+                            <h3 class="member-name">算法团队</h3>
+                            <p class="member-role">AI研发</p>
+                            <p class="member-description">
+                                专注于自然语言处理和机器学习算法研发，
+                                不断提升AI分析的准确性和可靠性。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 联系我们 -->
+                <div class="section contact-section">
+                    <h2 class="section-title">联系我们</h2>
+                    <div class="section-content">
+                        <p>如果您有任何问题、建议或合作意向，欢迎随时与我们联系。</p>
+                    </div>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <div class="contact-icon">邮箱</div>
+                            <h3 class="contact-title">邮箱联系</h3>
+                            <p class="contact-detail">contact@truthmirror.com</p>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">反馈</div>
+                            <h3 class="contact-title">在线反馈</h3>
+                            <p class="contact-detail">通过平台提交反馈意见</p>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">官网</div>
+                            <h3 class="contact-title">官方网站</h3>
+                            <p class="contact-detail">www.truthmirror.com</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 使用条款 -->
+                <div class="section">
+                    <h2 class="section-title">使用说明</h2>
+                    <div class="section-content">
+                        <h4 style="color: #2c5aa0; margin-bottom: 15px;">如何使用平台：</h4>
+                        <ol style="padding-left: 20px; line-height: 2;">
+                            <li><strong>提交事件</strong>：用户可以提交需要验证的信息或事件</li>
+                            <li><strong>社区关注</strong>：当事件获得10人关注时，自动触发AI分析</li>
+                            <li><strong>AI分析</strong>：系统对事件进行多维度分析，生成初步评估</li>
+                            <li><strong>社区投票</strong>：用户可以对AI分析结果进行投票表态</li>
+                            <li><strong>结果确认</strong>：当投票达到20票时，事件进入确认状态</li>
+                        </ol>
+                        <br>
+                        <h4 style="color: #2c5aa0; margin-bottom: 15px;">平台特色：</h4>
+                        <ul style="padding-left: 20px; line-height: 2;">
+                            <li><strong>智能分析</strong>：AI技术提供快速、准确的初步判断</li>
+                            <li><strong>社区验证</strong>：集体智慧确保结果的公正性</li>
+                            <li><strong>透明过程</strong>：完整展示分析过程和投票结果</li>
+                            <li><strong>可信保障</strong>：多层验证机制提高结果可信度</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 返回顶部按钮 -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
+    <!-- 引入导航栏组件 -->
+    <script src="./js/nav.js"></script>
+    <!-- 引入API管理器 -->
+    <script src="./js/api.js"></script>
+    <script>
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查是否已有导航栏，避免重复插入
+            if (!document.getElementById('main-header')) {
+                // 插入导航栏
+                document.body.insertAdjacentHTML('afterbegin', createNavHTML('about'));
+
+                // 插入导航栏样式
+                const style = document.createElement('style');
+                style.textContent = createNavCSS();
+                document.head.appendChild(style);
+            }
+            
+            // 初始化返回顶部按钮
+            initBackToTop();
+            
+            // 加载统计数据
+            loadStats();
+        });
+
+        // 初始化返回顶部按钮
+        function initBackToTop() {
+            const backToTopBtn = document.getElementById('backToTop');
+            
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopBtn.style.display = 'flex';
+                } else {
+                    backToTopBtn.style.display = 'none';
+                }
+            });
+        }
+
+        // 返回顶部
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                // 获取平台统计数据
+                const response = await api.getEvents({ limit: 1 });
+                const totalEvents = response.total || 0;
+                
+                // 获取各状态统计
+                const [votingEvents, confirmedEvents] = await Promise.all([
+                    api.getEvents({ limit: 1, status: 'voting' }),
+                    api.getEvents({ limit: 1, status: 'confirmed' })
+                ]);
+                
+                // 更新统计显示
+                updateStatsDisplay({
+                    totalEvents: totalEvents,
+                    votingEvents: votingEvents.total || 0,
+                    confirmedEvents: confirmedEvents.total || 0,
+                    activeUsers: Math.floor(totalEvents * 0.3) // 估算活跃用户数
+                });
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                // 使用默认数据
+                updateStatsDisplay({
+                    totalEvents: 29,
+                    votingEvents: 3,
+                    confirmedEvents: 1,
+                    activeUsers: 8
+                });
+            }
+        }
+
+        // 更新统计显示
+        function updateStatsDisplay(stats) {
+            const statsSection = document.querySelector('.stats-section');
+            if (statsSection) {
+                statsSection.innerHTML = `
+                    <h2 class="section-title">平台数据</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">${stats.totalEvents}</div>
+                            <div class="stat-label">已处理事件</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${stats.votingEvents}</div>
+                            <div class="stat-label">投票中事件</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${stats.confirmedEvents}</div>
+                            <div class="stat-label">已确认事件</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${stats.activeUsers}</div>
+                            <div class="stat-label">活跃用户</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

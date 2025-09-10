@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>真相之镜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* 导航栏样式由nav.js提供 */
+
+        /* 主要内容 */
+        main {
+            padding: 30px 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #e1e5e9;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 搜索和筛选 */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #e1e5e9;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .filter-select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        /* 事件列表 */
+        .events-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .event-card {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .event-card:hover {
+            border-color: #2c5aa0;
+            box-shadow: 0 2px 8px rgba(44, 90, 160, 0.1);
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .event-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .event-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-nominated { background: #cce5ff; color: #004085; }
+        .status-processing { background: #f8d7da; color: #721c24; }
+        .status-voting { background: #d4edda; color: #155724; }
+        .status-confirmed { background: #e2e3e5; color: #383d41; }
+
+        .event-description {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .event-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .vote-progress {
+            margin: 15px 0;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #f1f3f4;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.3s;
+        }
+
+        .vote-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 10px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .pagination button:hover {
+            background: #f8f9fa;
+        }
+
+        .pagination button.active {
+            background: #2c5aa0;
+            color: white;
+            border-color: #2c5aa0;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-input,
+            .filter-select {
+                min-width: auto;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .event-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .event-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏将通过nav.js自动插入 -->
+
+    <main>
+        <div class="container">
+            <!-- 统计信息 -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-events">0</div>
+                    <div class="stat-label">总事件数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="voting-events">0</div>
+                    <div class="stat-label">投票中</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="confirmed-events">0</div>
+                    <div class="stat-label">已确认</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="processing-events">0</div>
+                    <div class="stat-label">处理中</div>
+                </div>
+            </div>
+
+            <!-- 搜索筛选 -->
+            <div class="filters">
+                <input type="text" class="search-input" placeholder="搜索事件..." id="search-input">
+                <select class="filter-select" id="status-filter">
+                    <option value="">全部状态</option>
+                    <option value="pending">待审核</option>
+                    <option value="nominated">已提名</option>
+                    <option value="processing">处理中</option>
+                    <option value="voting">投票中</option>
+                    <option value="confirmed">已确认</option>
+                </select>
+                <button class="btn" onclick="loadEvents()">刷新</button>
+            </div>
+
+            <!-- 事件列表 -->
+            <div class="events-grid" id="events-list">
+                <!-- 事件卡片将通过JavaScript动态加载 -->
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination" id="pagination">
+                <!-- 分页按钮将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 引入导航栏组件 -->
+    <script src="./js/nav.js"></script>
+    <!-- 引入API管理器 -->
+    <script src="./js/api.js"></script>
+    <script>
+        // 应用状态管理
+        let events = [];
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalEvents = 0;
+        let currentUser = null;
+        let isLoading = false;
+
+        // 事件状态标签映射
+        window.STATUS_LABELS = window.STATUS_LABELS || {
+            'pending': '待审核',
+            'nominated': '已提名',
+            'processing': '处理中',
+            'voting': '投票中',
+            'confirmed': '已确认'
+        };
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkUserStatus();
+            loadEvents();
+            setupEventListeners();
+        });
+
+        // 检查用户登录状态
+        function checkUserStatus() {
+            const userStr = localStorage.getItem('currentUser');
+            if (userStr) {
+                try {
+                    currentUser = JSON.parse(userStr);
+                } catch (error) {
+                    console.error('解析用户信息失败:', error);
+                    localStorage.removeItem('currentUser');
+                    currentUser = null;
+                }
+            } else {
+                currentUser = null;
+            }
+
+            // 更新导航栏用户状态（如果导航栏已加载）
+            if (window.NavigationBar) {
+                window.NavigationBar.update();
+            }
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('input', debounce(filterEvents, 300));
+            document.getElementById('status-filter').addEventListener('change', async function() {
+                currentPage = 1; // 重置到第一页
+                await loadEvents();
+            });
+        }
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 显示加载状态
+        function showLoading(show = true) {
+            isLoading = show;
+            const container = document.getElementById('events-list');
+            if (show) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>加载中...</h3>
+                        <p>正在获取事件列表，请稍候</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            // 简单的消息显示，可以后续改进
+            if (type === 'success') {
+                console.log('✓ ' + message);
+            } else if (type === 'error') {
+                console.error('✗ ' + message);
+                alert(message); // 临时使用alert，后续可改为更友好的提示
+            } else {
+                console.info('ℹ ' + message);
+            }
+        }
+
+        // 加载事件数据（仅使用真实API）
+        async function loadEvents() {
+            if (isLoading) return;
+            
+            showLoading(true);
+            
+            try {
+                const statusFilter = document.getElementById('status-filter').value;
+                const params = {
+                    skip: (currentPage - 1) * pageSize,
+                    limit: pageSize
+                };
+                
+                if (statusFilter) {
+                    params.status = statusFilter;
+                }
+
+                // 仅使用真实API
+                const response = await api.getEvents(params);
+
+                // 适配新的响应格式
+                if (response.events) {
+                    events = response.events;
+                    totalEvents = response.total;
+                    currentPage = response.page;
+                } else {
+                    // 兼容旧格式
+                    events = response;
+                    totalEvents = events.length;
+                }
+
+                // 事件数据已经包含创建者信息和基础统计，无需额外加载
+
+                await updateStats();
+                renderEvents();
+                renderPagination();
+                showMessage(`成功加载 ${events.length} 个事件，共 ${totalEvents} 个`, 'success');
+                
+            } catch (error) {
+                console.error('加载事件失败:', error);
+                showMessage('无法连接到服务器，请检查网络连接或稍后重试', 'error');
+                
+                // 显示连接错误状态
+                showConnectionError();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示连接错误状态
+        function showConnectionError() {
+            const container = document.getElementById('events-list');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>无法连接到服务器</h3>
+                    <p>请检查网络连接或确保后端服务正在运行</p>
+                    <button class="btn btn-primary" onclick="loadEvents()">重新加载</button>
+                </div>
+            `;
+
+            // 清空统计数据
+            document.getElementById('total-events').textContent = '?';
+            document.getElementById('voting-events').textContent = '?';
+            document.getElementById('confirmed-events').textContent = '?';
+            document.getElementById('processing-events').textContent = '?';
+        }
+
+        // 更新统计信息 - 使用全局统计而不是当前页面统计
+        async function updateStats() {
+            try {
+                // 获取各状态的统计数据
+                const [allEvents, votingEvents, confirmedEvents, processingEvents] = await Promise.all([
+                    api.getEvents({ limit: 1 }), // 只需要获取总数
+                    api.getEvents({ limit: 1, status: 'voting' }),
+                    api.getEvents({ limit: 1, status: 'confirmed' }),
+                    api.getEvents({ limit: 1, status: 'processing' })
+                ]);
+
+                // 使用API返回的总数
+                document.getElementById('total-events').textContent = allEvents.total || 0;
+                document.getElementById('voting-events').textContent = votingEvents.total || 0;
+                document.getElementById('confirmed-events').textContent = confirmedEvents.total || 0;
+                document.getElementById('processing-events').textContent = processingEvents.total || 0;
+            } catch (error) {
+                console.error('更新统计信息失败:', error);
+                // 如果API调用失败，使用当前页面数据作为备选
+                const stats = events.reduce((acc, event) => {
+                    acc.total++;
+                    if (event.status === 'voting') acc.voting++;
+                    if (event.status === 'confirmed') acc.confirmed++;
+                    if (event.status === 'processing') acc.processing++;
+                    return acc;
+                }, { total: 0, voting: 0, confirmed: 0, processing: 0 });
+
+                document.getElementById('total-events').textContent = totalEvents || stats.total;
+                document.getElementById('voting-events').textContent = stats.voting;
+                document.getElementById('confirmed-events').textContent = stats.confirmed;
+                document.getElementById('processing-events').textContent = stats.processing;
+            }
+        }
+
+        // 渲染事件列表
+        function renderEvents() {
+            const container = document.getElementById('events-list');
+            const filteredEvents = getFilteredEvents();
+            
+            if (filteredEvents.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>暂无事件</h3>
+                        <p>还没有相关的事件，成为第一个提交事件的人吧！</p>
+                        <a href="./submit-event.html" class="btn btn-primary">提交事件</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredEvents.map(event => `
+                <div class="event-card" onclick="viewEvent(${event.id})">
+                    <div class="event-header">
+                        <div>
+                            <h3 class="event-title">${event.title || '未知标题'}</h3>
+                            <div class="event-status status-${event.status}">
+                                ${window.STATUS_LABELS[event.status] || event.status}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="event-description">${event.description || '暂无描述'}</p>
+                    
+                    <div class="event-meta">
+                        <span>${formatDate(event.created_at)}</span>
+                        <span>${event.interest_count || 0} 人关注</span>
+                        ${event.creator ? `<span>创建者: ${event.creator.username || event.creator.nickname || '匿名'}</span>` : ''}
+                    </div>
+                    
+                    ${event.vote_stats ? `
+                        <div class="vote-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${event.vote_stats.support_percentage || 0}%"></div>
+                            </div>
+                            <div class="vote-stats">
+                                <span>支持 ${(event.vote_stats.support_percentage || 0).toFixed(1)}%</span>
+                                <span>反对 ${(event.vote_stats.oppose_percentage || 0).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="event-actions">
+                        <button class="btn btn-sm" onclick="event.stopPropagation(); toggleInterest(${event.id})" ${!currentUser ? 'disabled title="请先登录"' : ''}>
+                            ${getInterestButtonText(event.id)}
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); viewEvent(${event.id})">
+                            查看详情
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 获取兴趣按钮文本
+        function getInterestButtonText(eventId) {
+            // 简化版本，后续可以加入用户已表达兴趣的状态检查
+            return '表示兴趣';
+        }
+
+        // 获取筛选后的事件（只处理搜索筛选，状态筛选已在后端完成）
+        function getFilteredEvents() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+
+            // 如果没有搜索词，直接返回所有事件（状态筛选已在后端完成）
+            if (!searchTerm) {
+                return events;
+            }
+
+            // 只进行搜索筛选
+            return events.filter(event => {
+                return event.title.toLowerCase().includes(searchTerm) ||
+                    event.description.toLowerCase().includes(searchTerm) ||
+                    (event.keywords && event.keywords.toLowerCase().includes(searchTerm));
+            });
+        }
+
+        // 筛选事件（仅处理搜索筛选）
+        function filterEvents() {
+            renderEvents();
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 查看事件详情
+        function viewEvent(eventId) {
+            window.location.href = `./event-detail.html?id=${eventId}`;
+        }
+
+        // 切换兴趣状态（使用真实API）
+        async function toggleInterest(eventId) {
+            if (!currentUser) {
+                alert('请先登录后再表示兴趣');
+                return;
+            }
+
+            try {
+                // 简化版本：总是尝试添加兴趣
+                await api.addInterest(eventId);
+                showMessage('兴趣表达成功！', 'success');
+
+                // 重新加载事件以更新兴趣计数
+                await loadEvents();
+
+            } catch (error) {
+                if (error.message.includes('已经添加过')) {
+                    // 尝试取消兴趣
+                    try {
+                        await api.removeInterest(eventId);
+                        showMessage('已取消兴趣', 'success');
+                        await loadEvents();
+                    } catch (removeError) {
+                        showMessage('操作失败: ' + removeError.message, 'error');
+                    }
+                } else {
+                    showMessage('表达兴趣失败: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // 渲染分页
+        function renderPagination() {
+            const container = document.getElementById('pagination');
+
+            if (totalEvents <= pageSize) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const totalPages = Math.ceil(totalEvents / pageSize);
+            let paginationHTML = '';
+
+            // 上一页按钮
+            if (currentPage > 1) {
+                paginationHTML += `<button onclick="goToPage(${currentPage - 1})">上一页</button>`;
+            }
+
+            // 页码按钮
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                paginationHTML += `<button onclick="goToPage(1)">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += `<span>...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === currentPage ? ' active' : '';
+                paginationHTML += `<button class="${activeClass}" onclick="goToPage(${i})">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<span>...</span>`;
+                }
+                paginationHTML += `<button onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+
+            // 下一页按钮
+            if (currentPage < totalPages) {
+                paginationHTML += `<button onclick="goToPage(${currentPage + 1})">下一页</button>`;
+            }
+
+            container.innerHTML = paginationHTML;
+        }
+
+        // 跳转到指定页面
+        async function goToPage(page) {
+            if (page === currentPage || page < 1) return;
+
+            currentPage = page;
+            await loadEvents();
+        }
+    </script>
+</body>
+</html>

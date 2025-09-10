@@ -1,80 +1,107 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException
 from typing import List
-from ..database import get_db
-from ..models import schemas
-from ..services.search_service import SearchService
+from ..services.simple_db_service import db_service
+from pydantic import BaseModel
 
 router = APIRouter()
 
-@router.post("/search/trigger/{event_id}")
-async def trigger_search_and_analysis(
-    event_id: int,
-    db: Session = Depends(get_db)
-):
-    """触发事件的搜索和AI分析流程"""
-    search_service = SearchService(db)
-    success = await search_service.trigger_search_and_analysis(event_id)
-    if not success:
-        raise HTTPException(status_code=400, detail="无法触发搜索分析")
-    return {"message": "搜索和分析已开始"}
+# 定义简单的请求/响应模型
+class SearchQuery(BaseModel):
+    query: str
+    event_id: int = None
 
-@router.get("/events/{event_id}/sources", response_model=List[schemas.InformationSource])
-async def get_event_sources(
-    event_id: int,
-    skip: int = 0,
-    limit: int = 20,
-    db: Session = Depends(get_db)
-):
-    """获取事件的信息源"""
-    search_service = SearchService(db)
-    return search_service.get_event_sources(event_id, skip=skip, limit=limit)
+@router.get("/search/")
+async def search_events(q: str = "", limit: int = 10):
+    """搜索事件 - 使用简单数据库服务"""
+    try:
+        if not q:
+            # 如果没有查询词，返回最新的事件
+            events = db_service.execute_query(
+                """SELECT e.id, e.title, e.description, e.keywords, e.status, 
+                          e.created_at, u.username, u.nickname
+                   FROM events e
+                   LEFT JOIN users u ON e.creator_id = u.id
+                   ORDER BY e.created_at DESC
+                   LIMIT %s""",
+                (limit,)
+            )
+        else:
+            # 在标题、描述和关键词中搜索
+            search_term = f"%{q}%"
+            events = db_service.execute_query(
+                """SELECT e.id, e.title, e.description, e.keywords, e.status, 
+                          e.created_at, u.username, u.nickname
+                   FROM events e
+                   LEFT JOIN users u ON e.creator_id = u.id
+                   WHERE e.title LIKE %s OR e.description LIKE %s OR e.keywords LIKE %s
+                   ORDER BY e.created_at DESC
+                   LIMIT %s""",
+                (search_term, search_term, search_term, limit)
+            )
+        
+        return {
+            "query": q,
+            "results": events,
+            "total": len(events)
+        }
+        
+    except Exception as e:
+        print(f"搜索事件错误: {e}")
+        return {
+            "query": q,
+            "results": [],
+            "total": 0
+        }
 
-@router.get("/events/{event_id}/analysis", response_model=schemas.AIAnalysis)
-async def get_event_analysis(
-    event_id: int,
-    db: Session = Depends(get_db)
-):
-    """获取事件的AI分析结果"""
-    search_service = SearchService(db)
-    analysis = search_service.get_event_analysis(event_id)
-    if not analysis:
-        raise HTTPException(status_code=404, detail="分析结果不存在")
-    return analysis
+@router.get("/search/sources/{event_id}")
+async def get_information_sources(event_id: int):
+    """获取事件的信息源 - 使用简单数据库服务"""
+    try:
+        sources = db_service.execute_query(
+            """SELECT id, url, title, website_name, content,
+                      ai_summary, relevance_score, created_at
+               FROM information_sources
+               WHERE event_id = %s
+               ORDER BY created_at DESC""",
+            (event_id,)
+        )
+        return sources
+    except Exception as e:
+        print(f"获取信息源错误: {e}")
+        return []
 
-@router.get("/events/{event_id}/detail", response_model=schemas.EventDetailInfo)
-async def get_event_detail(
-    event_id: int,
-    db: Session = Depends(get_db)
-):
-    """获取事件详情"""
-    search_service = SearchService(db)
-    detail = search_service.get_event_detail(event_id)
-    if not detail:
-        raise HTTPException(status_code=404, detail="事件详情不存在")
-    return detail
+@router.post("/search/sources/")
+async def add_information_source(event_id: int, title: str, url: str, website_name: str = None):
+    """添加信息源 - 使用简单数据库服务"""
+    try:
+        source_id = db_service.execute_update(
+            """INSERT INTO information_sources
+               (event_id, url, title, website_name, created_at)
+               VALUES (%s, %s, %s, %s, NOW())""",
+            (event_id, url, title, website_name)
+        )
+        
+        if source_id:
+            return {"message": "信息源添加成功", "source_id": source_id}
+        else:
+            raise HTTPException(status_code=500, detail="添加信息源失败")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"添加信息源错误: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"服务器内部错误: {str(e)}"
+        )
 
-@router.post("/events/{event_id}/detail", response_model=schemas.EventDetailInfo)
-async def create_event_detail(
-    event_id: int,
-    detail: schemas.EventDetailCreate,
-    db: Session = Depends(get_db)
-):
-    """创建事件详情"""
-    search_service = SearchService(db)
-    # 确保event_id匹配
-    detail.event_id = event_id
-    return search_service.create_event_detail(detail)
+# 保留其他原有的API端点，但暂时返回未实现
+@router.post("/search/ai-analysis/")
+async def trigger_ai_analysis(event_id: int):
+    """触发AI分析 - 暂未实现"""
+    raise HTTPException(status_code=501, detail="AI分析功能暂未实现")
 
-@router.put("/events/{event_id}/detail", response_model=schemas.EventDetailInfo)
-async def update_event_detail(
-    event_id: int,
-    detail_update: schemas.EventDetailUpdate,
-    db: Session = Depends(get_db)
-):
-    """更新事件详情"""
-    search_service = SearchService(db)
-    detail = search_service.update_event_detail(event_id, detail_update)
-    if not detail:
-        raise HTTPException(status_code=404, detail="事件详情不存在")
-    return detail
+@router.get("/search/ai-results/{event_id}")
+async def get_ai_analysis_results(event_id: int):
+    """获取AI分析结果 - 暂未实现"""
+    raise HTTPException(status_code=501, detail="AI分析结果功能暂未实现")

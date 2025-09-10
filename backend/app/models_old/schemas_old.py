@@ -1,7 +1,10 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from ..models.models import EventStatus, UserRole, Stance
+
+if TYPE_CHECKING:
+    from .schemas import EventDetailInfo
 
 # 用户相关模式
 class UserBase(BaseModel):
@@ -16,9 +19,13 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = None
 
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
 class User(UserBase):
     id: int
-    role: UserRole
+    role: str  # 暂时使用字符串而不是枚举
     is_active: bool
     created_at: datetime
     
@@ -132,7 +139,7 @@ class EventDetail(Event):
     information_sources: List[InformationSource] = []
     vote_stats: Optional[VoteStats] = None
     ai_analysis: Optional[AIAnalysis] = None
-    event_detail: Optional['EventDetailInfo'] = None
+    # event_detail: Optional['EventDetailInfo'] = None  # 移除循环引用
 
 # 事件详情相关模式
 class EventDetailBase(BaseModel):
