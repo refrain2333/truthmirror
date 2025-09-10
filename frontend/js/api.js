@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // 真相之镜 API 管理器 - v1.1 (端口修复版本)
+=======
+// 真相之镜 API 管理器
+>>>>>>> 9c5b02b2cae790d904bb1f964a817e5cef3977f1
 // 基于 API_GUIDE.md 的完整实现
 
 class TruthMirrorAPI {
