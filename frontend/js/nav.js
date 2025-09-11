@@ -52,7 +52,6 @@ function createNavCSS() {
     return `
         /* 通用导航栏样式 */
         #main-header {
-<<<<<<< HEAD
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -60,17 +59,7 @@ function createNavCSS() {
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-=======
-            background: white;
-            border-bottom: 1px solid #ddd;
-            padding: 10px 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
->>>>>>> 9c5b02b2cae790d904bb1f964a817e5cef3977f1
-        }
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);        }
 
         #main-header .container {
             max-width: 1200px;
@@ -133,7 +122,6 @@ function createNavCSS() {
         }
 
         #main-header .btn {
-<<<<<<< HEAD
             padding: 10px 18px;
             border: 2px solid transparent;
             background: rgba(255, 255, 255, 0.9);
@@ -166,34 +154,7 @@ function createNavCSS() {
 
         #main-header .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-=======
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            background: white;
-            color: #666;
-            text-decoration: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            display: inline-block;
-            transition: all 0.2s;
-        }
-
-        #main-header .btn:hover {
-            background: #f8f9fa;
-        }
-
-        #main-header .btn-primary {
-            background: #2c5aa0;
-            color: white;
-            border-color: #2c5aa0;
-        }
-
-        #main-header .btn-primary:hover {
-            background: #1e3d72;
->>>>>>> 9c5b02b2cae790d904bb1f964a817e5cef3977f1
-        }
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);        }
 
         /* 响应式设计 */
         @media (max-width: 768px) {
