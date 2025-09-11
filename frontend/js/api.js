@@ -70,14 +70,18 @@ class TruthMirrorAPI {
 
     // 获取事件列表
     async getEvents(params = {}) {
-        const { skip = 0, limit = 10, status = '' } = params;
+        const { skip = 0, limit = 10, status = '', _t = null } = params;
         const queryParams = new URLSearchParams();
         if (skip) queryParams.append('skip', skip);
         if (limit) queryParams.append('limit', limit);
         if (status) queryParams.append('status', status);
+        if (_t) queryParams.append('_t', _t); // 缓存破坏参数
         
         const endpoint = `/events/?${queryParams}`;
-        return await this.apiCall(endpoint, { method: 'GET' });
+        return await this.apiCall(endpoint, { 
+            method: 'GET',
+            cache: 'no-cache' // 禁用缓存
+        });
     }
 
     // 获取事件详情
@@ -248,6 +252,51 @@ class TruthMirrorAPI {
     // 触发搜索和分析
     async triggerAnalysis(eventId) {
         return await this.apiCall(`/search/trigger/${eventId}`, {
+            method: 'POST'
+        });
+    }
+
+    // ===== 智能新闻分析API =====
+
+    // 触发智能分析（按照事件生命周期流程）
+    async analyzeEvent(eventTitle, eventDescription, eventId = null) {
+        return await this.apiCall('/analysis/analyze', {
+            method: 'POST',
+            body: JSON.stringify({
+                event_title: eventTitle,
+                event_description: eventDescription,
+                event_id: eventId
+            })
+        });
+    }
+
+    // 获取AI分析真实进度状态
+    async getAnalysisStatus(eventId) {
+        return await this.apiCall(`/analysis/status/${eventId}`, {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+    }
+
+    // 获取最终结果（用于完成后渲染与刷新恢复）
+    async getAnalysisResult(eventId) {
+        return await this.apiCall(`/analysis/result/${eventId}`, {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+    }
+
+    // 获取所有事件的分析状态（用于首页全量同步）
+    async getAllAnalysisStatus() {
+        return await this.apiCall('/analysis/status', {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+    }
+
+    // 测试智能分析
+    async testAnalysis() {
+        return await this.apiCall('/analysis/test', {
             method: 'POST'
         });
     }

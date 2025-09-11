@@ -454,6 +454,23 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-color: transparent;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-success:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
@@ -558,6 +575,121 @@
         let currentUser = null;
         let userVote = null;
 
+        // ===== 刷新后恢复分析进度：本地持久化 =====
+        const ANALYSIS_SESSIONS_KEY = 'tm_ai_analysis_sessions';
+
+        // 统一提示气泡
+        function showToast(message, type = 'info') {
+            const colors = {
+                info: '#3b82f6',
+                success: '#10b981',
+                warning: '#f59e0b',
+                error: '#ef4444'
+            };
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; right: 20px; top: 20px; z-index: 9999;
+                background: ${colors[type]}; color: white; padding: 10px 14px;
+                border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                font-size: 14px;`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function readAnalysisSessions() {
+            try {
+                const raw = localStorage.getItem(ANALYSIS_SESSIONS_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function writeAnalysisSessions(sessions) {
+            try {
+                localStorage.setItem(ANALYSIS_SESSIONS_KEY, JSON.stringify(sessions));
+            } catch (e) {
+                // 忽略存储错误
+            }
+        }
+
+        function saveAnalysisSession(eventId) {
+            const sessions = readAnalysisSessions();
+            sessions[eventId] = {
+                eventId: Number(eventId),
+                startedAt: Date.now()
+            };
+            writeAnalysisSessions(sessions);
+        }
+
+        function clearAnalysisSession(eventId) {
+            const sessions = readAnalysisSessions();
+            if (sessions[eventId]) {
+                delete sessions[eventId];
+                writeAnalysisSessions(sessions);
+            }
+        }
+
+        // 清理过期会话（默认30分钟）
+        function garbageCollectSessions(maxAgeMs = 30 * 60 * 1000) {
+            const now = Date.now();
+            const sessions = readAnalysisSessions();
+            let changed = false;
+            Object.keys(sessions).forEach(id => {
+                if (!sessions[id]?.startedAt || (now - sessions[id].startedAt) > maxAgeMs) {
+                    delete sessions[id];
+                    changed = true;
+                }
+            });
+            if (changed) writeAnalysisSessions(sessions);
+        }
+
+        async function resumeAnalysisIfOngoing(eventId) {
+            const sessions = readAnalysisSessions();
+            const sess = sessions[eventId];
+            if (!sess) return;
+
+            // 向后端核对真实状态，若不是 started 则清理
+            try {
+                const status = await api.getAnalysisStatus(eventId);
+                if (!status || (status.status !== 'started' && status.status !== 'completed')) {
+                    clearAnalysisSession(eventId);
+                    const existing = document.getElementById(`progress-${eventId}`);
+                    if (existing) existing.remove();
+                    return;
+                }
+            } catch (_) {}
+
+            const stepDuration = 15000; // 与进度监控保持一致
+            const totalSteps = 7;
+            const elapsed = Math.max(0, Date.now() - (sess.startedAt || Date.now()));
+            let currentStep = Math.min(totalSteps, Math.floor(elapsed / stepDuration) + 1);
+
+            // 构造与启动接口一致的最小结果对象用于渲染进度框
+            const fakeResult = { success: true, event_id: Number(eventId) };
+            showRealTimeAnalysisProgress(fakeResult);
+
+            // 先把已完成步骤渲染出来
+            for (let s = 1; s < currentStep; s++) {
+                updateProgressStep(eventId, s);
+            }
+            updateProgressStep(eventId, currentStep);
+
+            // 恢复定时器，从当前步骤继续
+            startAnalysisProgressMonitor(eventId, currentStep);
+
+            // 更新按钮状态
+            const analysisBtn = document.getElementById('analysis-btn');
+            if (analysisBtn) {
+                analysisBtn.disabled = true;
+                analysisBtn.innerHTML = '🚀 后台分析中...';
+                analysisBtn.style.background = 'linear-gradient(45deg, #f59e0b, #d97706)';
+            }
+
+            showToast('已为你恢复AI分析进度', 'success');
+        }
+
         // 事件状态标签映射（与index.html保持一致）
         window.STATUS_LABELS = window.STATUS_LABELS || {
             'pending': '待审核',
@@ -584,7 +716,18 @@
             const eventId = urlParams.get('id');
             
             if (eventId) {
+                garbageCollectSessions();
                 loadEvent(eventId);
+                // 尝试恢复最终结果
+                const cached = localStorage.getItem(`tm_ai_result_${eventId}`);
+                if (cached) {
+                    try {
+                        const parsed = JSON.parse(cached);
+                        showAnalysisResult(parsed);
+                    } catch (e) {}
+                }
+                // 若有会话，校验并恢复
+                resumeAnalysisIfOngoing(eventId);
             } else {
                 showError('未指定事件ID');
             }
@@ -611,6 +754,8 @@
                 }
                 
                 renderEvent();
+                // 渲染后尝试恢复分析进度
+                resumeAnalysisIfOngoing(eventId);
                 
             } catch (error) {
                 console.error('加载事件失败:', error);
@@ -621,6 +766,7 @@
         // 显示加载状态
         function showLoading() {
             const container = document.getElementById('event-detail');
+
             container.innerHTML = `
                 <div class="event-header">
                     <div class="event-title">加载中...</div>
@@ -737,6 +883,10 @@
         // 渲染事件详情
         function renderEvent() {
             const container = document.getElementById('event-detail');
+            const minInterest = Number(localStorage.getItem('tm_interest_threshold') || 10);
+            const canAnalyseByInterest = Number(eventData.interest_count || 0) >= minInterest;
+            const isAdminUser = !!(currentUser && currentUser.role === 'admin');
+            const adminApproved = (eventData.status && eventData.status !== 'pending') || isAdminUser;
             
             container.innerHTML = `
                 <div class="event-header">
@@ -771,11 +921,17 @@
                     <button class="btn" onclick="toggleInterest()" ${!currentUser ? 'disabled title="请先登录"' : ''}>
                         ${eventData.user_interested ? '取消关注' : '关注此事件'}
                     </button>
+                    <button class="btn btn-success" onclick="triggerNewsAnalysis()" id="analysis-btn" ${(canAnalyseByInterest || adminApproved) ? '' : `disabled title="关注人数需≥${minInterest}或管理员审核通过"`}>
+                        🤖 智能分析
+                    </button>
                     <button class="btn btn-primary" onclick="shareEvent()">分享</button>
                     ${renderAdminActions()}
                     <a href="./index.html" class="btn">返回列表</a>
                 </div>
             `;
+
+            // 启动阈值监控
+            startInterestWatcher(eventData.id, minInterest);
         }
 
         // 渲染管理员操作按钮
@@ -804,6 +960,27 @@
             }
 
             return actions;
+        }
+
+        // 关注人数阈值监控：每10秒拉取详情，达标时提示并解锁按钮
+        let interestWatcher = null;
+        function startInterestWatcher(eventId, minInterest) {
+            if (interestWatcher) clearInterval(interestWatcher);
+            interestWatcher = setInterval(async () => {
+                try {
+                    const detail = await api.getEventDetail(eventId);
+                    const count = Number(detail?.interest_count || 0);
+                    const statusVal = detail?.status;
+                    const analysisBtn = document.getElementById('analysis-btn');
+                    const canAnalyse = count >= minInterest || (statusVal && statusVal !== 'pending');
+                    if (canAnalyse && analysisBtn && analysisBtn.disabled) {
+                        analysisBtn.disabled = false;
+                        analysisBtn.removeAttribute('title');
+                        showToast(`关注人数已达到${minInterest}或已审核通过，现可启动AI分析`, 'success');
+                        clearInterval(interestWatcher);
+                    }
+                } catch (_) {}
+            }, 10000);
         }
 
         // 渲染投票区域
@@ -1155,6 +1332,509 @@
                     prompt('请复制以下链接:', url);
                 });
             }
+        }
+
+        // 触发智能新闻分析
+        async function triggerNewsAnalysis() {
+            if (!eventData) {
+                alert('事件数据未加载，请稍后再试');
+                return;
+            }
+
+            const analysisBtn = document.getElementById('analysis-btn');
+            // 启动前的前置条件：关注人数>=10 或 管理员审核通过
+            const isAdmin = !!(currentUser && currentUser.role === 'admin');
+            const minInterest = Number(localStorage.getItem('tm_interest_threshold') || 10);
+            const enoughInterest = Number(eventData.interest_count || 0) >= minInterest;
+            const adminApproved = (eventData.status && eventData.status !== 'pending') || isAdmin;
+            if (!enoughInterest && !adminApproved) {
+                showToast(`该事件关注人数不足${minInterest}，且未通过管理员审核，暂不启动AI分析。`, 'warning');
+                return;
+            }
+            // 如果已有进行中的会话或已有进度框，则不重复触发
+            const sessions = readAnalysisSessions();
+            const existingProgress = document.getElementById(`progress-${eventData.id}`);
+            if (sessions[eventData.id] || existingProgress) {
+                showToast('该事件AI分析已在进行，已为你恢复进度', 'warning');
+                resumeAnalysisIfOngoing(eventData.id);
+                return;
+            }
+            
+            try {
+                // 更新按钮状态为专业的分析模式
+                analysisBtn.disabled = true;
+                analysisBtn.innerHTML = '🧠 AI分析进行中...';
+                analysisBtn.style.background = 'linear-gradient(45deg, #667eea, #764ba2)';
+                analysisBtn.style.color = 'white';
+                analysisBtn.style.transform = 'scale(0.98)';
+                
+                console.log(`🚀 [事件${eventData.id}] 启动专业AI分析:`, eventData.title);
+                
+                // 调用智能分析API
+                const result = await api.analyzeEvent(eventData.title, eventData.description, eventData.id);
+                
+                console.log('分析结果:', result);
+                
+                if (result.success) {
+                    // 显示真正的分析进度界面
+                    showRealTimeAnalysisProgress(result);
+                    analysisBtn.innerHTML = '🚀 后台分析中...';
+                    analysisBtn.style.background = 'linear-gradient(45deg, #f59e0b, #d97706)';
+                    showToast('AI分析已启动，正在后台运行...', 'info');
+                    
+                    // 启动进度监控
+                    startAnalysisProgressMonitor(result.event_id);
+                    // 记录本地会话，支持刷新恢复
+                    saveAnalysisSession(result.event_id);
+                } else {
+                    const errorMsg = result.error || '未知错误';
+                    console.error('AI分析失败:', errorMsg);
+                    
+                    // 显示专业的错误提示
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = `
+                        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                        color: white;
+                        padding: 15px;
+                        border-radius: 10px;
+                        margin: 15px 0;
+                    `;
+                    errorDiv.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="font-size: 1.5em;">⚠️</div>
+                            <div>
+                                <div style="font-weight: bold;">AI分析失败</div>
+                                <div style="font-size: 0.9em;">${errorMsg}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    const actionsDiv = document.querySelector('.actions');
+                    if (actionsDiv) {
+                        actionsDiv.appendChild(errorDiv);
+                    } else {
+                        const eventDetail = document.querySelector('.event-detail') || document.querySelector('.container');
+                        if (eventDetail) {
+                            eventDetail.appendChild(errorDiv);
+                        }
+                    }
+                    analysisBtn.innerHTML = '❌ 分析失败';
+                    analysisBtn.style.background = 'linear-gradient(45deg, #ef4444, #dc2626)';
+                }
+                
+            } catch (error) {
+                console.error('智能分析失败:', error);
+                showToast('智能分析失败: ' + error.message, 'error');
+                analysisBtn.innerHTML = '❌ 分析失败';
+            } finally {
+                // 按钮状态由进度/完成回调控制，不在这里恢复，避免重复点击
+            }
+        }
+
+        // 显示真正的AI分析进度
+        function showRealTimeAnalysisProgress(result) {
+            // 若已存在同事件进度卡片，先移除，避免重复
+            const existed = document.getElementById(`progress-${result.event_id}`);
+            if (existed) existed.remove();
+            // 创建进度显示区域
+            const progressSection = document.createElement('div');
+            progressSection.className = 'analysis-progress';
+            progressSection.id = `progress-${result.event_id}`;
+            progressSection.style.cssText = `
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 25px;
+                border-radius: 15px;
+                margin: 20px 0;
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            `;
+            
+            progressSection.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.4em;">🧠 AI深度分析正在进行</h3>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9;">事件${result.event_id} | 预计分析时间: 60-120秒</p>
+                    </div>
+                </div>
+                
+                <div class="progress-steps" style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                    <h4 style="margin: 0 0 15px 0;">📊 分析流程进度</h4>
+                    <div class="steps-container" id="steps-${result.event_id}">
+                        <div class="step active">🔍 步骤1: 搜索相关新闻</div>
+                        <div class="step">🌐 步骤2: 检测连通性</div>
+                        <div class="step">🤖 步骤3: AI相关性筛选</div>
+                        <div class="step">📄 步骤4: 抓取网页内容</div>
+                        <div class="step">📝 步骤5: 提取正文信息</div>
+                        <div class="step">🧠 步骤6: GLM/DeepSeek深度分析</div>
+                        <div class="step">📋 步骤7: 生成最终报告</div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                        💡 提示: 可在后端终端窗口查看详细的实时日志
+                    </div>
+                </div>
+                
+                <style>
+                    .step {
+                        padding: 8px 12px;
+                        margin: 5px 0;
+                        border-radius: 6px;
+                        background: rgba(255,255,255,0.1);
+                        opacity: 0.5;
+                        transition: all 0.3s ease;
+                    }
+                    .step.active {
+                        background: rgba(255,255,255,0.2);
+                        opacity: 1;
+                        border-left: 4px solid #10b981;
+                    }
+                    .step.completed {
+                        background: rgba(16, 185, 129, 0.3);
+                        opacity: 1;
+                        border-left: 4px solid #10b981;
+                    }
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            
+            // 插入到事件详情后
+            const actionsDiv = document.querySelector('.actions');
+            if (actionsDiv) {
+                actionsDiv.appendChild(progressSection);
+            } else {
+                // 如果找不到actions容器，插入到事件详情区域
+                const eventDetail = document.querySelector('.event-detail') || document.querySelector('.container');
+                if (eventDetail) {
+                    eventDetail.appendChild(progressSection);
+                }
+            }
+        }
+
+        // 启动分析进度监控
+        async function startAnalysisProgressMonitor(eventId, startFromStep = 0) {
+            let currentStep = startFromStep;
+            const totalSteps = 7;
+            const stepDuration = 1000; // 轮询更及时
+            const maxDuration = 3 * 60 * 1000; // 3分钟超时
+            const startTime = Date.now();
+            let idlePolls = 0;
+
+            const progressInterval = setInterval(async () => {
+                try {
+                    const status = await api.getAnalysisStatus(eventId);
+                    if (status?.status === 'idle') {
+                        idlePolls++;
+                        if (idlePolls >= 3) {
+                            clearInterval(progressInterval);
+                            clearAnalysisSession(eventId);
+                            showToast('未检测到后台任务，已取消，请重新发起', 'warning');
+                            const btn = document.getElementById('analysis-btn');
+                            if (btn) { btn.disabled = false; btn.innerHTML = '🤖 智能分析'; }
+                            return;
+                        }
+                    } else if (status?.status === 'started' || status?.status === 'running') {
+                        // 将后端 step 字段映射到前端步骤序号
+                        const stepMap = {
+                            'step1_search': 1,
+                            'step2_accessible': 2,
+                            'step3_relevance': 3,
+                            'step4_fetch_html': 4,
+                            'step5_extract': 5,
+                            'step6_ai': 6,
+                            'step6_direct_ai_attempt': 6,
+                            'step7_summary': 7
+                        };
+                        if (status.step && stepMap[status.step]) {
+                            currentStep = Math.max(currentStep, stepMap[status.step]);
+                        }
+
+                        // 依据计数推断步骤（后端未细化写入时也能前进）
+                        if (typeof status.raw_count === 'number' && status.raw_count > 0) {
+                            currentStep = Math.max(currentStep, 1);
+                        }
+                        if (typeof status.accessible === 'number' && status.accessible > 0) {
+                            currentStep = Math.max(currentStep, 2);
+                        }
+                        if (typeof status.relevant === 'number' && status.relevant > 0) {
+                            currentStep = Math.max(currentStep, 3);
+                        }
+
+                        // 时间推进兜底：长期无状态更新时按耗时推进，避免前端停留在第一步
+                        const startedAt = new Date(status.started_at || status?.analysis_statistics?.started_at || startTime).getTime();
+                        const elapsed = Date.now() - startedAt;
+                        const thresholds = [15000, 30000, 60000, 90000, 120000]; // 15s→2, 30s→3, 60s→4, 90s→5, 120s→6
+                        thresholds.forEach((t, idx) => {
+                            if (elapsed >= t) currentStep = Math.max(currentStep, idx + 2);
+                        });
+                    } else if (status?.status === 'completed') {
+                        updateProgressStep(eventId, totalSteps);
+                        clearInterval(progressInterval);
+                        // 拉取最终结果并渲染
+                        try {
+                            const finalRes = await api.getAnalysisResult(eventId);
+                            if (finalRes?.success && finalRes.detailed_result) {
+                                const resultPayload = {
+                                    success: true,
+                                    event_id: eventId,
+                                    ai_analysis: {
+                                        reliability: 'reliable',
+                                        summary: finalRes.detailed_result.final_summary || '（无摘要）',
+                                        analysis_statistics: finalRes.detailed_result.analysis_statistics || {},
+                                        workflow_summary: finalRes.detailed_result.workflow_summary || {}
+                                    },
+                                    detailed_result: finalRes.detailed_result,
+                                    timestamp: new Date().toISOString(),
+                                    next_step: 'VOTING'
+                                };
+                                // 缓存到本地，刷新可恢复
+                                localStorage.setItem(`tm_ai_result_${eventId}`, JSON.stringify(resultPayload));
+                                showAnalysisResult(resultPayload);
+                            }
+                        } catch (e) {}
+                        showAnalysisCompleted(eventId);
+                        clearAnalysisSession(eventId);
+                        return;
+                    } else if (status?.status === 'failed') {
+                        clearInterval(progressInterval);
+                        clearAnalysisSession(eventId);
+                        showToast('AI分析失败：' + (status.error || status.step || '未知错误'), 'error');
+                        const btn = document.getElementById('analysis-btn');
+                        if (btn) { btn.disabled = false; btn.innerHTML = '🤖 智能分析'; }
+                        return;
+                    }
+
+                    // 兜底：即使状态未到 completed，但若后端已生成结果文件，直接拉取并完成
+                    try {
+                        const maybeDone = await api.getAnalysisResult(eventId);
+                        if (maybeDone?.success && maybeDone.detailed_result) {
+                            updateProgressStep(eventId, totalSteps);
+                            const resultPayload = {
+                                success: true,
+                                event_id: eventId,
+                                ai_analysis: {
+                                    reliability: 'reliable',
+                                    summary: maybeDone.detailed_result.final_summary || '（无摘要）',
+                                    analysis_statistics: maybeDone.detailed_result.analysis_statistics || {},
+                                    workflow_summary: maybeDone.detailed_result.workflow_summary || {}
+                                },
+                                detailed_result: maybeDone.detailed_result,
+                                timestamp: new Date().toISOString(),
+                                next_step: 'VOTING'
+                            };
+                            localStorage.setItem(`tm_ai_result_${eventId}`, JSON.stringify(resultPayload));
+                            showAnalysisResult(resultPayload);
+                            showAnalysisCompleted(eventId);
+                            clearAnalysisSession(eventId);
+                            clearInterval(progressInterval);
+                            return;
+                        }
+                    } catch (_) {}
+
+                    // 动态显示抓取统计
+                    const stepsContainer = document.getElementById(`steps-${eventId}`);
+                    if (stepsContainer && (status?.raw_count || status?.accessible || status?.relevant)) {
+                        const s1 = stepsContainer.children[0];
+                        const s2 = stepsContainer.children[1];
+                        const s3 = stepsContainer.children[2];
+                        if (s1 && typeof status.raw_count === 'number') s1.textContent = `🔍 步骤1: 搜索相关新闻 (${status.raw_count})`;
+                        if (s2 && typeof status.accessible === 'number') s2.textContent = `🌐 步骤2: 检测连通性 (${status.accessible})`;
+                        if (s3 && typeof status.relevant === 'number') s3.textContent = `🤖 步骤3: AI相关性筛选 (${status.relevant})`;
+                    }
+                } catch (e) {
+                    // 网络异常时保守推进一步
+                    currentStep = Math.min(totalSteps, currentStep + 1);
+                }
+
+                if (Date.now() - startTime > maxDuration) {
+                    clearInterval(progressInterval);
+                    clearAnalysisSession(eventId);
+                    showToast('AI分析超时，已停止。请稍后重试。', 'warning');
+                    const btn = document.getElementById('analysis-btn');
+                    if (btn) { btn.disabled = false; btn.innerHTML = '🤖 智能分析'; }
+                    return;
+                }
+
+                currentStep = Math.min(totalSteps, Math.max(1, currentStep));
+                updateProgressStep(eventId, currentStep);
+            }, stepDuration);
+
+            window.progressIntervals = window.progressIntervals || {};
+            window.progressIntervals[eventId] = progressInterval;
+        }
+
+        // 更新进度步骤
+        function updateProgressStep(eventId, stepNum) {
+            const stepsContainer = document.getElementById(`steps-${eventId}`);
+            if (stepsContainer) {
+                const steps = stepsContainer.querySelectorAll('.step');
+                
+                // 更新步骤状态
+                steps.forEach((step, index) => {
+                    step.classList.remove('active');
+                    if (index < stepNum - 1) {
+                        step.classList.add('completed');
+                    } else if (index === stepNum - 1) {
+                        step.classList.add('active');
+                    }
+                });
+            }
+        }
+
+        // 显示分析完成状态
+        function showAnalysisCompleted(eventId) {
+            const progressSection = document.getElementById(`progress-${eventId}`);
+            if (progressSection) {
+                progressSection.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 3em; margin-bottom: 15px;">✅</div>
+                        <h3 style="margin: 0 0 10px 0;">AI分析完成！</h3>
+                        <p style="margin: 0; opacity: 0.9;">
+                            事件${eventId}的深度分析已完成，您可以查看详细的分析报告和可信度评估。
+                        </p>
+                    </div>
+                `;
+                progressSection.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            }
+            
+            // 更新按钮状态
+            const analysisBtn = document.getElementById('analysis-btn');
+            if (analysisBtn) {
+                analysisBtn.innerHTML = '✅ 分析完成';
+                analysisBtn.style.background = 'linear-gradient(45deg, #10b981, #059669)';
+                analysisBtn.disabled = false;
+            }
+
+            showToast('AI分析完成', 'success');
+        }
+
+        // 显示专业的AI分析结果
+        function showAnalysisResult(result) {
+            // 先移除之前的分析结果
+            const existingResult = document.querySelector('.analysis-result');
+            if (existingResult) {
+                existingResult.remove();
+            }
+
+            // 创建结果显示区域
+            const analysisSection = document.createElement('div');
+            analysisSection.className = 'analysis-result';
+            analysisSection.style.cssText = `
+                background: rgba(16, 185, 129, 0.1);
+                border: 1px solid rgba(16, 185, 129, 0.2);
+                border-radius: 12px;
+                padding: 20px;
+                margin: 20px 0;
+                backdrop-filter: blur(10px);
+            `;
+            
+            // 显示AI评级
+            const aiRating = result.ai_analysis?.reliability || 'unknown';
+            const ratingColors = {
+                'reliable': '#28a745',
+                'questionable': '#ffc107', 
+                'unreliable': '#dc3545',
+                'insufficient': '#6c757d'
+            };
+            const ratingTexts = {
+                'reliable': '可靠',
+                'questionable': '存疑',
+                'unreliable': '不可靠', 
+                'insufficient': '信息不足'
+            };
+            
+            analysisSection.innerHTML = `
+                <div class="analysis-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px 12px 0 0; color: white; margin: -20px -20px 20px -20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.5em;">🧠 AI智能分析报告</h3>
+                            <p style="margin: 5px 0 0 0; opacity: 0.9;">基于GLM-4.5 & DeepSeek多模型深度分析</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.9em; opacity: 0.8;">分析引擎</div>
+                            <div style="font-weight: bold;">Truth Mirror AI</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-meta" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong>📋 事件编号:</strong> ${result.event_id || 'N/A'}
+                        </div>
+                        <div>
+                            <strong>🔍 分析查询:</strong> ${result.query}
+                        </div>
+                        <div>
+                            <strong>⏰ 分析时间:</strong> ${new Date(result.timestamp).toLocaleString()}
+                        </div>
+                        <div>
+                            <strong>📊 处理状态:</strong> ${result.success ? '✅ 分析完成' : '❌ 分析失败'}
+                        </div>
+                    </div>
+                </div>
+
+                ${result.ai_analysis ? `
+                    <div class="reliability-section" style="margin-bottom: 25px;">
+                        <h4 style="color: #2d3748; margin-bottom: 15px;">🎯 AI可信度评估</h4>
+                        <div class="ai-rating" style="background: ${ratingColors[aiRating]}15; border: 2px solid ${ratingColors[aiRating]}40; border-radius: 10px; padding: 20px; position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: ${ratingColors[aiRating]};"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 1.2em; font-weight: bold; color: ${ratingColors[aiRating]}; margin-bottom: 5px;">
+                                        ${ratingTexts[aiRating]} (${aiRating.toUpperCase()})
+                                    </div>
+                                    <div style="color: #666; font-size: 0.9em;">基于多维度AI模型交叉验证结果</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 2em; color: ${ratingColors[aiRating]};">
+                                        ${aiRating === 'reliable' ? '🟢' : aiRating === 'questionable' ? '🟡' : aiRating === 'unreliable' ? '🔴' : '⚪'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                            </div>
+                            <p><strong>下一步:</strong> ${result.next_step === 'VOTING' ? '🗳️ 进入投票阶段' : result.next_step}</p>
+                        ` : ''}
+                    </div>
+                    
+                    ${result.detailed_result ? `
+                        <div class="analysis-details">
+                            <h4>📝 详细分析</h4>
+                            <div class="analysis-report" style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                                ${result.detailed_result.final_summary || '分析报告生成中...'}
+                            </div>
+                            ${result.detailed_result.workflow_summary ? `
+                                <div class="workflow-stats">
+                                    <h5>📈 处理统计</h5>
+                                    <ul style="padding-left: 20px;">
+                                        <li>原始新闻: ${result.detailed_result.workflow_summary.step1_raw_news || 0} 条</li>
+                                        <li>可访问链接: ${result.detailed_result.workflow_summary.step2_accessible || 0} 条</li>
+                                        <li>相关新闻: ${result.detailed_result.workflow_summary.step3_relevant || 0} 条</li>
+                                        <li>内容提取: ${result.detailed_result.workflow_summary.step5_content_extracted || 0} 条</li>
+                                        <li>AI分析: ${result.detailed_result.workflow_summary.step6_analyzed || 0} 条</li>
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : '<p>正在生成详细分析报告...</p>'}
+                </div>
+            `;
+
+            // 插入到操作按钮区域之前
+            const actionsSection = document.querySelector('.actions');
+            if (actionsSection) {
+                actionsSection.parentNode.insertBefore(analysisSection, actionsSection);
+            } else {
+                document.querySelector('.main-content').appendChild(analysisSection);
+            }
+
+            // 滚动到分析结果
+            analysisSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         // 显示错误

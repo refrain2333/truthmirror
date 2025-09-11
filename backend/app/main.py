@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 # 使用新的pymysql API模块
-from .api import events, users, votes, search
+from .api import events, users, votes, search, analysis
 
 app = FastAPI(
     title=settings.app_name,
@@ -25,6 +25,7 @@ app.include_router(events.router, prefix="/api/v1", tags=["events"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(votes.router, prefix="/api/v1", tags=["votes"])
 app.include_router(search.router, prefix="/api/v1", tags=["search"])
+app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["analysis"])
 
 @app.get("/")
 async def root():

@@ -1,0 +1,28 @@
+{
+  "query": "11 111_E56_1757588938",
+  "total_count": 0,
+  "processed_time": "2025-09-11T19:09:14.918293",
+  "pages_fetched": 5,
+  "news_items": [],
+  "accessibility_check": {
+    "total_checked": 0,
+    "accessible_count": 0,
+    "inaccessible_count": 0
+  },
+  "ai_relevance_filter": {
+    "original_count": 0,
+    "filtered_count": 0,
+    "filter_applied": false
+  },
+  "content_extraction": {
+    "total_items": 0,
+    "extracted_count": 0,
+    "failed_count": 0
+  },
+  "ai_analysis": {
+    "total_items": 0,
+    "success_count": 0,
+    "failed_count": 0,
+    "analysis_model": "gemini-2.0-flash-exp"
+  }
+}
