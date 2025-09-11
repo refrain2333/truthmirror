@@ -476,7 +476,6 @@
             checkUserStatus();
             loadEvents();
             setupEventListeners();
-            setInterval(pollAllStatuses, 2000);
         });
 
         // 检查用户登录状态
@@ -783,50 +782,6 @@
         // 查看事件详情
         function viewEvent(eventId) {
             window.location.href = `./event-detail.html?id=${eventId}`;
-        }
-
-        // 首页全量进度同步
-        const stepMap = {
-            'step1_search': 1,
-            'step2_accessible': 2,
-            'step3_relevance': 3,
-            'step4_fetch_html': 4,
-            'step5_extract': 5,
-            'step6_ai': 6,
-            'step7_summary': 7
-        };
-
-        function renderCardProgress(eventId, stepNum, status) {
-            const cards = Array.from(document.querySelectorAll('.event-card'));
-            const card = cards.find(c => c.innerHTML.includes(`viewEvent(${eventId})`));
-            if (!card) return;
-            let bar = card.querySelector('.ai-progress');
-            if (!bar) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'ai-progress';
-                wrapper.style.cssText = 'height:8px;background:#e5e7eb;border-radius:4px;margin-top:8px;overflow:hidden;';
-                const fill = document.createElement('div');
-                fill.className = 'ai-progress-fill';
-                fill.style.cssText = 'height:100%;width:0;background:linear-gradient(90deg,#667eea,#764ba2);transition:width .6s;';
-                wrapper.appendChild(fill);
-                card.appendChild(wrapper);
-                bar = wrapper;
-            }
-            const fill = bar.querySelector('.ai-progress-fill');
-            const pct = Math.max(0, Math.min(100, (stepNum - 1) / 6 * 100));
-            fill.style.width = pct + '%';
-        }
-
-        async function pollAllStatuses() {
-            try {
-                const res = await api.getAllAnalysisStatus();
-                if (res?.success && Array.isArray(res.items)) {
-                    res.items.forEach(s => {
-                        const stepNum = stepMap[s.step] || 1;
-                        renderCardProgress(s.event_id, stepNum, s.status);
-                    });
-                }
-            } catch (_) {}
         }
 
         // 切换兴趣状态（使用真实API）
