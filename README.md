@@ -68,12 +68,9 @@
 ## 手动启动步骤
 ### 前端启动
 ```bash
-# 进入前端目录
-cd frontend
 
-# 启动前端服务 (端口8080)
-python -m http.server 8080 --bind 127.0.0.1 --directory .
-```
+# 打开或者新建终端，输入以下命令启动前端服务 (端口8080)
+py -m http.server 8080 --bind 127.0.0.1 --directory "truthmirror/frontend"
 
 ### 后端启动
 ```bash

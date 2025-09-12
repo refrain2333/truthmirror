@@ -24,6 +24,10 @@ class UserUpdate(BaseModel):
     email: str = None
     bio: str = None
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 @router.post("/users/", status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate):
     """创建新用户 - 使用简单数据库服务"""
@@ -104,6 +108,39 @@ async def get_user(user_id: int):
             status_code=500,
             detail=f"服务器内部错误: {str(e)}"
         )
+
+# 简单登录接口：与前端 /users/login 对齐
+@router.post("/users/login")
+async def login(payload: LoginRequest):
+    """用户登录校验。
+    注意：当前为简化实现，密码以明文对比，后续可替换为加密校验。
+    返回字段需包含 id/username/email/nickname/role，前端将其缓存为 currentUser。
+    """
+    try:
+        users = db_service.execute_query(
+            "SELECT id, username, email, nickname, role, password FROM users WHERE username = %s",
+            (payload.username,)
+        )
+        if not users:
+            raise HTTPException(status_code=401, detail="用户名或密码错误")
+
+        user = users[0]
+        if (user.get("password") or "") != payload.password:
+            raise HTTPException(status_code=401, detail="用户名或密码错误")
+
+        # 构造响应，去掉密码字段
+        return {
+            "id": user["id"],
+            "username": user["username"],
+            "email": user.get("email"),
+            "nickname": user.get("nickname"),
+            "role": user.get("role", "user")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"登录失败: {e}")
+        raise HTTPException(status_code=500, detail="登录失败")
 
 # 更新用户信息
 @router.put("/users/{user_id}")

@@ -887,6 +887,7 @@
             const canAnalyseByInterest = Number(eventData.interest_count || 0) >= minInterest;
             const isAdminUser = !!(currentUser && currentUser.role === 'admin');
             const adminApproved = (eventData.status && eventData.status !== 'pending') || isAdminUser;
+            const hideGeneralAnalysisForAdmin = isAdminUser && eventData.status === 'nominated';
             
             container.innerHTML = `
                 <div class="event-header">
@@ -921,9 +922,10 @@
                     <button class="btn" onclick="toggleInterest()" ${!currentUser ? 'disabled title="请先登录"' : ''}>
                         ${eventData.user_interested ? '取消关注' : '关注此事件'}
                     </button>
+                    ${hideGeneralAnalysisForAdmin ? '' : `
                     <button class="btn btn-success" onclick="triggerNewsAnalysis()" id="analysis-btn" ${(canAnalyseByInterest || adminApproved) ? '' : `disabled title="关注人数需≥${minInterest}或管理员审核通过"`}>
                         🤖 智能分析
-                    </button>
+                    </button>`}
                     <button class="btn btn-primary" onclick="shareEvent()">分享</button>
                     ${renderAdminActions()}
                     <a href="./index.html" class="btn">返回列表</a>
@@ -932,6 +934,12 @@
 
             // 启动阈值监控
             startInterestWatcher(eventData.id, minInterest);
+
+            // 若分析按钮被禁用，显示条件提示并拦截点击
+            const analysisBtn = document.getElementById('analysis-btn');
+            if (analysisBtn && analysisBtn.disabled) {
+                showAnalysisDisabledHint(minInterest);
+            }
         }
 
         // 渲染管理员操作按钮
@@ -981,6 +989,31 @@
                     }
                 } catch (_) {}
             }, 10000);
+        }
+
+        // 当未达成条件时，仅在按钮上提示并拦截点击
+        function showAnalysisDisabledHint(minInterest) {
+            const btn = document.getElementById('analysis-btn');
+            if (!btn) return;
+            // 仅给按钮添加 title，不再插入下方说明卡片
+            btn.title = `关注人数需≥${minInterest}或管理员审核通过`;
+
+            // 为禁用按钮添加透明覆盖层，确保点击也能提示
+            try {
+                btn.style.position = 'relative';
+                const layerId = 'analysis-disabled-overlay';
+                if (!document.getElementById(layerId)) {
+                    const overlay = document.createElement('div');
+                    overlay.id = layerId;
+                    overlay.style.cssText = 'position:absolute;inset:0;cursor:not-allowed;background:transparent;';
+                    overlay.addEventListener('click', function(e){
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showToast(`需关注人数≥${minInterest}或管理员审核通过后才能启动AI分析`, 'warning');
+                    });
+                    btn.appendChild(overlay);
+                }
+            } catch (_) {}
         }
 
         // 渲染投票区域
